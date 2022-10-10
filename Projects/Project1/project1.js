@@ -83,6 +83,9 @@ let cubeEnd;
 // start index / end for cylinder
 let cylinderStart;
 let cylinderEnd;
+// start / end index for sphere
+let sphereStart;
+let sphereEnd;
 
 // transformation matrix for rotate
 let ctms = [];
@@ -99,7 +102,7 @@ let degree = 0;
 let currAxis = 'z';
 
 function keyDownCallback(event) {
-    console.log(event.keyCode);
+    //console.log(event.keyCode);
     if (event.keyCode == 32) {
         ctm_index += 1;
         if (ctm_index == 4)
@@ -208,6 +211,12 @@ function keyDownCallback(event) {
         display(cylinderStart, cylinderEnd);
     }
 
+    // sphere
+    if (event.keyCode == 72 || currObj == 'Sphere') {
+        currObj = 'Sphere';
+        display(sphereStart, sphereEnd);
+    }
+
 }
 
 // main driver
@@ -217,12 +226,15 @@ function main() {
         return -1;
     document.onkeydown = keyDownCallback;
 
-    genCone({ degrees: 10 });
-    genCube({ degrees: 90 });
-    genCylinder({ degrees: 10 });
+    // genCone({ degrees: 10 });
+    // genCube({ degrees: 90 });
+    //genCylinder({ degrees: 10 });
+    genSphere();
+    currObj = 'Sphere';
+    console.log(positions);
     ctms = createIdentity();
     init(positions, colors);
-    display(coneStart, coneEnd);
+    display(sphereStart, sphereEnd);
 }
 
 // generate cone vertices/colors
@@ -250,6 +262,14 @@ function genCylinder(arg) {
     generateColors(colors, cylinderEnd - cylinderStart);
 }
 
+// generate sphere vertices/colors
+function genSphere(arg) {
+    sphereStart = positions.length;
+    generateSphereVertices(positions);
+    sphereEnd = positions.length;
+    generateColors(colors, sphereEnd - sphereStart);
+}
+
 // calls draw arrays to draw cone
 function display(start, end) {
     // Clear
@@ -274,7 +294,7 @@ let translates = [
 let currTranslate = 0;
 
 function animate() {
-    degree += 3;
+    degree += .5;
     if (degree > 360) {
         degree = 0;
 
@@ -290,13 +310,14 @@ function animate() {
     else ctms = null;
 
 
-    let curr = translates[currTranslate];
-    ctms = matrixMatrixMult(translate(curr[0], curr[1], curr[2]), ctms);
+    //let curr = translates[currTranslate];
+    //ctms = matrixMatrixMult(translate(curr[0], curr[1], curr[2]), ctms);
 
 
     if (currObj === 'Cube') display(cubeStart, cubeEnd);
     else if (currObj === 'Cone') display(coneStart, coneEnd);
     else if (currObj === 'Cylinder') display(cylinderStart, cylinderEnd);
+    else if (currObj === 'Sphere') display(sphereStart, sphereEnd);
     else console.log('incorrect shape / no shape loaded');
 
     if (isAnimating) requestAnimationFrame(animate);
