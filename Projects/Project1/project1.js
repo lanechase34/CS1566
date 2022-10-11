@@ -6,8 +6,6 @@
 var gl = null;
 var canvas = null;
 var ctm_location;
-var ctm_index = 0;
-var degs = [0, 30, 60, 90];
 
 function initGL(canvas) {
     gl = canvas.getContext("webgl");
@@ -74,149 +72,177 @@ function init(positions, colors) {
 // intialize positions/colors arrays
 let positions = [];
 let colors = [];
-// start index / end for cone
+
+// start/end index for cone
 let coneStart;
 let coneEnd;
-// start index / end for cube
+// start/end index for cube
 let cubeStart;
 let cubeEnd;
-// start index / end for cylinder
+// start/end index for cylinder
 let cylinderStart;
 let cylinderEnd;
-// start / end index for sphere
+// start/end index for sphere
 let sphereStart;
 let sphereEnd;
+// start/end index for torus
+let torusStart;
+let torusEnd;
 
-// transformation matrix for rotate
+// current transformation matrix
 let ctms = [];
 
 // keep track of the current object drawn
-let currObj = 'Cone';
+let currObj;
 
 // for rotate and animation
 let isAnimating = false;
-let x = 1;
-let y = 1;
-let z = 1;
+
 let degree = 0;
 let currAxis = 'z';
 
 function keyDownCallback(event) {
-    //console.log(event.keyCode);
-    if (event.keyCode == 32) {
-        ctm_index += 1;
-        if (ctm_index == 4)
-            ctm_index = 0;
-        console.log("Tilting backward " + degs[ctm_index] + " degrees")
-        ctms = [[[1.0, 0.0, 0.0, 0.0],
-        [0.0, 1.0, 0.0, 0.0],
-        [0.0, 0.0, 1.0, 0.0],
-        [0.0, 0.0, 0.0, 1.0]],
-        [[1.0, 0.0, 0.0, 0.0],
-        [0.0, 0.87, -0.50, 0.0],
-        [0.0, 0.50, 0.87, 0.0],
-        [0.0, 0.0, 0.0, 1.0]],
-        [[1.0, 0.0, 0.0, 0.0],
-        [0.0, 0.50, -0.87, 0.0],
-        [0.0, 0.87, 0.50, 0.0],
-        [0.0, 0.0, 0.0, 1.0]],
-        [[1.0, 0.0, 0.0, 0.0],
-        [0.0, 0.0, -1.0, 0.0],
-        [0.0, 1.0, 0.0, 0.0],
-        [0.0, 0.0, 0.0, 1.0]]];
-        ctms = ctms[ctm_index];
+    // determine key press and update current drawn shape
+    switch (event.keyCode) {
+        // case for animation
+        case 71:
+            if (isAnimating) {
+                isAnimating = false;
+            }
+            else {
+                isAnimating = true;
+                currAxis = 'custom';
+                requestAnimationFrame(animate);
+            }
+            break;
+        case 67:
+            currObj = 'Cube';
+            break;
+        case 79:
+            currObj = 'Cone';
+            break;
+        case 76:
+            currObj = 'Cylinder';
+            break;
+        case 72:
+            currObj = 'Sphere';
+            break;
     }
+    display();
+}
 
-    // animation
+function mouseMoveCallback(event) {
+    if (mouseDown) {
+        vEnd = createVector(4);
+        let webCoord = convertCoord(event);
+        // if z = NaN, we are clicking outside object so ignore
+        if (webCoord.webZ > 0) {
+            vEnd[0] = webCoord.webX;
+            vEnd[1] = webCoord.webY;
+            vEnd[2] = webCoord.webZ;
 
-    // rotate z axis
-    if (event.keyCode == 90) {
-        if (isAnimating) {
-            isAnimating = false;
-        }
-        else {
-            isAnimating = true;
-            currAxis = 'z';
-            requestAnimationFrame(animate);
-        }
-    }
-
-    // rotate x axis
-    if (event.keyCode == 88) {
-        if (isAnimating) {
-            isAnimating = false;
-        }
-        else {
-            isAnimating = true;
-            currAxis = 'x';
-            requestAnimationFrame(animate);
+            // make sure the mouse release at location different than starting vector
+            if (vStart[0] != vEnd[0] || vStart[1] != vEnd[1] || vStart[2] != vEnd[2]) {
+                trackBall();
+            }
         }
     }
+}
 
-    // rotate y axis
-    if (event.keyCode == 89) {
-        if (isAnimating) {
-            isAnimating = false;
-        }
-        else {
-            isAnimating = true;
-            currAxis = 'y';
-            requestAnimationFrame(animate);
-        }
-    }
+// vectors to generate arbitrary about axis
+let vStart;
+let vEnd;
+let mouseDown;
 
-    // scaling
-    // zoom in w - 87
-    if (event.keyCode == 87) {
-        x = x + .1;
-        y = y + .1;
-        z = z + .1;
-        ctms = scaling(x, y, z);
+// capture initial starting point and convert to starting vector
+function mouseDownCallback(event) {
+    mouseDown = true;
+    vStart = createVector(4);
+    let webCoord = convertCoord(event);
+    // if z = NaN, we are clicking outside object so ignore
+    if (webCoord.webZ > 0) {
+        vStart[0] = webCoord.webX;
+        vStart[1] = webCoord.webY;
+        vStart[2] = webCoord.webZ;
     }
-    // zoom out s - 83
-    if (event.keyCode == 83) {
-        x = x - .1;
-        y = y - .1;
-        z = z - .1;
-        ctms = scaling(x, y, z);
-    }
+}
 
-    // custom animation
-    if (event.keyCode == 71) {
-        if (isAnimating) {
-            isAnimating = false;
-        }
-        else {
-            isAnimating = true;
-            currAxis = 'custom';
-            requestAnimationFrame(animate);
-        }
-    }
+// capture release ending point and convert to ending vector
+function mouseUpCallback(event) {
+    mouseDown = false;
+}
 
-    // change shape being displayed
-    // new shape means translate to origin
-    // cube
-    if (event.keyCode == 67 || currObj == 'Cube') {
-        currObj = 'Cube';
-        display(cubeStart, cubeEnd);
-    }
-    // cone
-    if (event.keyCode == 79 || currObj == 'Cone') {
-        currObj = 'Cone';
-        display(coneStart, coneEnd);
-    }
-    // cylinder
-    if (event.keyCode == 76 || currObj == 'Cylinder') {
-        currObj = 'Cylinder';
-        display(cylinderStart, cylinderEnd);
-    }
+// convert canvas coordinates to webGL coordinates
+function convertCoord(event) {
+    // capture canvas mouse down coordinates
+    let canvasX = event.clientX - canvas.offsetLeft;
+    let canvasY = event.clientY - canvas.offsetTop;
 
-    // sphere
-    if (event.keyCode == 72 || currObj == 'Sphere') {
-        currObj = 'Sphere';
-        display(sphereStart, sphereEnd);
-    }
+    // convert to webGL coordinates (origin at 0,0)
+    let webX = (canvasX - (canvas.width / 2)) / (canvas.width / 2);
+    let webY = (-canvasY + (canvas.width / 2)) / (canvas.width / 2);
 
+    // get z using vector length = 1
+    // z = sqrt(1 - x^2 - y^2)
+    let webZ = Math.sqrt(1 - webX ** 2 - webY ** 2);
+
+    return { 'webX': webX, 'webY': webY, 'webZ': webZ };
+}
+
+// with starting point vector and end point vector, create the trackball animation
+function trackBall() {
+    // check to make sure both vectors are defined and have z initialized > 0
+    if (vStart[2] > 0 && vEnd[2] > 0) {
+        // create about vector by performing vStart x vEnd
+        let vAbout = crossProduct(vStart, vEnd);
+        // normalize about vector
+        vAbout = vectorNormalize(vAbout);
+
+        let d = Math.sqrt(vAbout[1] ** 2 + vAbout[2] ** 2);
+
+        // rotate X thetaX
+        let rX = createMatrix(4, 4);
+        rX[0][0] = 1;
+        rX[3][3] = 1;
+        rX[2][2] = vAbout[2] / d;
+        rX[1][1] = vAbout[2] / d;
+        rX[1][2] = vAbout[1] / d;
+        rX[2][1] = -1 * vAbout[1] / d;
+
+        // rotate Y thetaY
+        let rY = createMatrix(4, 4);
+        rY[1][1] = 1;
+        rY[3][3] = 1;
+        rY[0][0] = d;
+        rY[0][2] = -vAbout[0];
+        rY[2][0] = vAbout[0];
+        rY[2][2] = d;
+
+
+
+        ctms = mmMult(ctms, mmMult(matrixTranspose(rX), mmMult(rY, mmMult(rotateZ(2), mmMult(matrixTranspose(rY), rX)))));
+        display();
+
+        // console.log();
+    }
+}
+
+// performs scaling when using mouse scroll wheel
+let scaleFactor = 1;
+function mouseWheelCallback(event) {
+    console.log(event);
+    // scale up
+    if (event.wheelDeltaY > 0) {
+        scaleFactor += .02;
+    }
+    // scale down
+    else if (event.wheelDeltaY < 0) {
+        scaleFactor -= .02;
+    }
+    ctms = scaling(scaleFactor, scaleFactor, scaleFactor);
+
+    // display
+    display(currObj);
 }
 
 // main driver
@@ -226,17 +252,30 @@ function main() {
         return -1;
     document.onkeydown = keyDownCallback;
 
-    // genCone({ degrees: 10 });
-    // genCube({ degrees: 90 });
-    //genCylinder({ degrees: 10 });
+    // to capture mouse events in canvas
+    canvas.onmousedown = mouseDownCallback;
+    canvas.onmouseup = mouseUpCallback;
+    canvas.onmousemove = mouseMoveCallback;
+    canvas.onwheel = mouseWheelCallback;
+
+    genCone({ degrees: 10 });
+    genCube({ degrees: 90 });
+    genCylinder({ degrees: 10 });
     genSphere();
+
     currObj = 'Sphere';
-    console.log(positions);
+
     ctms = createIdentity();
+
     init(positions, colors);
-    display(sphereStart, sphereEnd);
+
+    console.log(positions);
+    display();
 }
 
+/**
+ * Generate shapes
+ */
 // generate cone vertices/colors
 function genCone(arg) {
     // figure out start index - end index to know length of what to draw for cone
@@ -270,8 +309,45 @@ function genSphere(arg) {
     generateColors(colors, sphereEnd - sphereStart);
 }
 
+// generate torus vertices/colors
+function genTorus(arg) {
+    torusStart = positions.length;
+    generateTorusVertices(positons);
+    torusEnd = positions.length;
+    generateColors(colors, torusEnd - torusStart);
+}
+
 // calls draw arrays to draw cone
-function display(start, end) {
+function display() {
+    let start;
+    let end;
+
+    switch (currObj) {
+        case 'Cone':
+            start = coneStart;
+            end = coneEnd;
+            break;
+        case 'Cylinder':
+            start = cylinderStart;
+            end = cylinderEnd;
+            break;
+        case 'Cube':
+            start = cubeStart;
+            end = cubeEnd;
+            break;
+        case 'Sphere':
+            start = sphereStart;
+            end = sphereEnd;
+            break;
+        case 'Torus':
+            start = torusStart;
+            end = torusEnd;
+            break;
+        default:
+            console.log('incorrect current shape');
+            return;
+    }
+
     // Clear
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     // Set the ctm
@@ -279,6 +355,17 @@ function display(start, end) {
     // draw triangles
     gl.drawArrays(gl.TRIANGLES, start, end - start);
 }
+
+
+
+
+
+
+
+
+
+
+
 
 
 let translates = [
@@ -306,19 +393,15 @@ function animate() {
     if (currAxis === 'z') ctms = rotateZ(degree);
     else if (currAxis === 'y') ctms = rotateY(degree);
     else if (currAxis === 'x') ctms = rotateX(degree);
-    else if (currAxis === 'custom') ctms = matrixMatrixMult(rotateX(degree), matrixMatrixMult(rotateZ(degree), matrixMatrixMult(rotateY(degree), scaling(.5, .5, .5))));
+    else if (currAxis === 'custom') ctms = mmMult(rotateX(degree), mmMult(rotateZ(degree), mmMult(rotateY(degree), scaling(.5, .5, .5))));
     else ctms = null;
 
 
     //let curr = translates[currTranslate];
-    //ctms = matrixMatrixMult(translate(curr[0], curr[1], curr[2]), ctms);
+    //ctms = mmMult(translate(curr[0], curr[1], curr[2]), ctms);
 
 
-    if (currObj === 'Cube') display(cubeStart, cubeEnd);
-    else if (currObj === 'Cone') display(coneStart, coneEnd);
-    else if (currObj === 'Cylinder') display(cylinderStart, cylinderEnd);
-    else if (currObj === 'Sphere') display(sphereStart, sphereEnd);
-    else console.log('incorrect shape / no shape loaded');
+    display();
 
     if (isAnimating) requestAnimationFrame(animate);
 

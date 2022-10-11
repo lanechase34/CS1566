@@ -153,7 +153,7 @@ function matrixVectorMult(m, v) {
 }
 
 // matrix matrix multiplication
-function matrixMatrixMult(m1, m2) {
+function mmMult(m1, m2) {
     if (!checkDimensions(m1, m2)) return -1;
     // initialize empty col matrix
     let result = new Array(m1.length);

@@ -86,7 +86,7 @@ function testLinearAlg() {
     printMatrix(matrixSub(m1, m2));
 
     console.log("m1 * m2");
-    printMatrix(matrixMatrixMult(m1, m2));
+    printMatrix(mmMult(m1, m2));
 
     console.log("m1^T (transpose)");
     printMatrix(matrixTranspose(m1));
@@ -98,10 +98,10 @@ function testLinearAlg() {
     printVector(matrixVectorMult(m1, v1));
 
     console.log("m1 * m1^-1 (returns identity I)");
-    printMatrix(matrixMatrixMult(m1, matrixInverse(m1)));
+    printMatrix(mmMult(m1, matrixInverse(m1)));
 
     console.log("m1^-1 * m1(returns identity I)");
-    printMatrix(matrixMatrixMult(matrixInverse(m1), m1));
+    printMatrix(mmMult(matrixInverse(m1), m1));
 }
 
 

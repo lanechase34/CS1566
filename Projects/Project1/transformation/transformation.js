@@ -23,6 +23,12 @@ function translate(x, y, z) {
 
 // rotate z matrix
 function rotateZ(degrees) {
+    let transponse = false;
+    if (degrees < 0) {
+        transponse = true;
+        degrees = degrees * -1;
+    }
+
     let result = createMatrix(4, 4);
     result[0][0] = Math.cos(degrees * (Math.PI / 180));
     result[1][1] = Math.cos(degrees * (Math.PI / 180));
@@ -30,11 +36,22 @@ function rotateZ(degrees) {
     result[1][0] = -1 * Math.sin(degrees * (Math.PI / 180));
     result[2][2] = 1;
     result[3][3] = 1;
-    return result;
+
+    if (transponse) {
+        return matrixTranspose(result);
+    } else {
+        return result;
+    }
 }
 
 // rotate x matrix
 function rotateX(degrees) {
+    let transponse = false;
+    if (degrees < 0) {
+        transponse = true;
+        degrees = degrees * -1;
+    }
+
     let result = createMatrix(4, 4);
     result[1][1] = Math.cos(degrees * (Math.PI / 180));
     result[2][2] = Math.cos(degrees * (Math.PI / 180));
@@ -42,12 +59,23 @@ function rotateX(degrees) {
     result[1][2] = Math.sin(degrees * (Math.PI / 180));
     result[3][3] = 1;
     result[0][0] = 1;
-    return result;
+
+    if (transponse) {
+        return matrixTranspose(result);
+    } else {
+        return result;
+    }
 }
 
 
 // rotate y matrix
 function rotateY(degrees) {
+    let transponse = false;
+    if (degrees < 0) {
+        transponse = true;
+        degrees = degrees * -1;
+    }
+
     let result = createMatrix(4, 4);
     result[0][0] = Math.cos(degrees * (Math.PI / 180));
     result[2][2] = Math.cos(degrees * (Math.PI / 180));
@@ -55,5 +83,10 @@ function rotateY(degrees) {
     result[0][2] = -1 * Math.sin(degrees * (Math.PI / 180));
     result[1][1] = 1;
     result[3][3] = 1;
-    return result;
+
+    if (transponse) {
+        return matrixTranspose(result);
+    } else {
+        return result;
+    }
 }

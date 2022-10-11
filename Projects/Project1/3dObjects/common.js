@@ -41,7 +41,6 @@ function generateSolidColors(colors, length) {
 
 // generate solid color per cube side
 function generateCubeColors(colors, length) {
-    console.log(`cube length - ${length}`);
     for (let curr = 0; curr < (length / 6); curr++) {
         let currColor = [Math.random(), Math.random(), Math.random(), 1];
         colors.push(currColor);
