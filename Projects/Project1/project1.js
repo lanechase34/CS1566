@@ -127,6 +127,9 @@ function keyDownCallback(event) {
         case 72:
             currObj = 'Sphere';
             break;
+        case 84:
+            currObj = 'Torus';
+            break;
     }
     display();
 }
@@ -218,19 +221,19 @@ function trackBall() {
         rY[2][0] = vAbout[0];
         rY[2][2] = d;
 
+        // u dot v = |u||v|cos(theta)
+        // since u, v normalized, their maginudes are 1 therefore theta = arccos(u dot v)
+        let theta = Math.acos(dotProduct(vStart, vEnd));
+        console.log(theta);
 
-
-        ctms = mmMult(ctms, mmMult(matrixTranspose(rX), mmMult(rY, mmMult(rotateZ(2), mmMult(matrixTranspose(rY), rX)))));
+        ctms = mmMult(ctms, mmMult(matrixTranspose(rX), mmMult(rY, mmMult(rotateZ(theta), mmMult(matrixTranspose(rY), rX)))));
         display();
-
-        // console.log();
     }
 }
 
 // performs scaling when using mouse scroll wheel
 let scaleFactor = 1;
 function mouseWheelCallback(event) {
-    console.log(event);
     // scale up
     if (event.wheelDeltaY > 0) {
         scaleFactor += .02;
@@ -261,15 +264,14 @@ function main() {
     genCone({ degrees: 10 });
     genCube({ degrees: 90 });
     genCylinder({ degrees: 10 });
-    genSphere();
+    genSphere({ x: 15, y: 15 });
+    genTorus({});
 
     currObj = 'Sphere';
 
     ctms = createIdentity();
 
     init(positions, colors);
-
-    console.log(positions);
     display();
 }
 
@@ -304,7 +306,7 @@ function genCylinder(arg) {
 // generate sphere vertices/colors
 function genSphere(arg) {
     sphereStart = positions.length;
-    generateSphereVertices(positions);
+    generateSphereVertices(positions, arg.x, arg.y);
     sphereEnd = positions.length;
     generateColors(colors, sphereEnd - sphereStart);
 }
@@ -312,7 +314,7 @@ function genSphere(arg) {
 // generate torus vertices/colors
 function genTorus(arg) {
     torusStart = positions.length;
-    generateTorusVertices(positons);
+    generateTorusVertices(positions);
     torusEnd = positions.length;
     generateColors(colors, torusEnd - torusStart);
 }
