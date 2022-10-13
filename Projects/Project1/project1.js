@@ -223,12 +223,18 @@ function trackBall() {
 
         // u dot v = |u||v|cos(theta)
         // since u, v normalized, their maginudes are 1 therefore theta = arccos(u dot v)
-        let theta = Math.acos(dotProduct(vStart, vEnd));
+        let theta = Math.acos(dotProduct(vStart, vEnd)) * (90 / Math.PI);
         console.log(theta);
 
         ctms = mmMult(ctms, mmMult(matrixTranspose(rX), mmMult(rY, mmMult(rotateZ(theta), mmMult(matrixTranspose(rY), rX)))));
         display();
     }
+}
+
+// when doing the trackball rotation, if user clicks and drags for a short amount of time,
+// object will continue moving in the direction and the desired speed indefinitely =
+function trackBallAnimate() {
+
 }
 
 // performs scaling when using mouse scroll wheel
