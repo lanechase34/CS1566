@@ -91,30 +91,22 @@ let torusEnd;
 
 // current transformation matrix
 let ctms = [];
+// trackball ctm
+let trackBallCtm = [];
+// scaling ctm
+let scalingCtm = [];
+
+// track time for frictionless spinning animation
+let isAnimating = false;
+let timeStart;
+let timeEnd;
 
 // keep track of the current object drawn
 let currObj;
 
-// for rotate and animation
-let isAnimating = false;
-
-let degree = 0;
-let currAxis = 'z';
-
 function keyDownCallback(event) {
     // determine key press and update current drawn shape
     switch (event.keyCode) {
-        // case for animation
-        case 71:
-            if (isAnimating) {
-                isAnimating = false;
-            }
-            else {
-                isAnimating = true;
-                currAxis = 'custom';
-                requestAnimationFrame(animate);
-            }
-            break;
         case 67:
             currObj = 'Cube';
             break;
@@ -134,6 +126,11 @@ function keyDownCallback(event) {
     display();
 }
 
+// vectors to generate arbitrary about axis
+let vStart;
+let vEnd;
+let mouseDown;
+
 function mouseMoveCallback(event) {
     if (mouseDown) {
         vEnd = createVector(4);
@@ -145,37 +142,64 @@ function mouseMoveCallback(event) {
             vEnd[2] = webCoord.webZ;
 
             // make sure the mouse release at location different than starting vector
-            if (vStart[0] != vEnd[0] || vStart[1] != vEnd[1] || vStart[2] != vEnd[2]) {
-                trackBall();
+            if (verifyAboutVector()) {
+                // with starting point vector and end point vector, create the trackball ctm
+                getTrackBallCtm();
+                display();
             }
         }
     }
 }
 
-// vectors to generate arbitrary about axis
-let vStart;
-let vEnd;
-let mouseDown;
+// verify about vector is valid
+function verifyAboutVector() {
+    // make sure vectors are declared
+    if (vStart != null && vEnd != null && vStart.length === 4 && vEnd.length === 4) {
+        // check that they aren't the same
+        if (vStart[0] != vEnd[0] || vStart[1] != vEnd[1] || vStart[2] != vEnd[2]) {
+            return true;
+        }
+    }
+    return false;
+}
 
 // capture initial starting point and convert to starting vector
 function mouseDownCallback(event) {
-    mouseDown = true;
-    vStart = createVector(4);
-    let webCoord = convertCoord(event);
-    // if z = NaN, we are clicking outside object so ignore
-    if (webCoord.webZ > 0) {
-        vStart[0] = webCoord.webX;
-        vStart[1] = webCoord.webY;
-        vStart[2] = webCoord.webZ;
+    // if spinning animation, stop
+    if (isAnimating) {
+        isAnimating = false;
+        mouseDown = false;
+    }
+    else {
+        // capture start time when mouse pressed
+        timeStart = new Date();
+
+        mouseDown = true;
+        // capture coordinates and convert to webGL canonical
+        vStart = createVector(4);
+        let webCoord = convertCoord(event);
+        // if z = NaN, we are clicking outside object so ignore
+        if (webCoord.webZ > 0) {
+            vStart[0] = webCoord.webX;
+            vStart[1] = webCoord.webY;
+            vStart[2] = webCoord.webZ;
+        }
     }
 }
 
 // capture release ending point and convert to ending vector
 function mouseUpCallback(event) {
+    // capture time (seconds) when mouse released
+    timeEnd = new Date();
     mouseDown = false;
+
+    // make sure the mouse release at location different than starting vector
+    if (verifyAboutVector()) {
+        trackBallAnimate();
+    }
 }
 
-// convert canvas coordinates to webGL coordinates
+// convert canvas coordinates to webGL canonical coordinates
 function convertCoord(event) {
     // capture canvas mouse down coordinates
     let canvasX = event.clientX - canvas.offsetLeft;
@@ -192,8 +216,8 @@ function convertCoord(event) {
     return { 'webX': webX, 'webY': webY, 'webZ': webZ };
 }
 
-// with starting point vector and end point vector, create the trackball animation
-function trackBall() {
+// generate trackBallCtm 
+function getTrackBallCtm() {
     // check to make sure both vectors are defined and have z initialized > 0
     if (vStart[2] > 0 && vEnd[2] > 0) {
         // create about vector by performing vStart x vEnd
@@ -201,6 +225,7 @@ function trackBall() {
         // normalize about vector
         vAbout = vectorNormalize(vAbout);
 
+        // get d
         let d = Math.sqrt(vAbout[1] ** 2 + vAbout[2] ** 2);
 
         // rotate X thetaX
@@ -217,25 +242,35 @@ function trackBall() {
         rY[1][1] = 1;
         rY[3][3] = 1;
         rY[0][0] = d;
-        rY[0][2] = -vAbout[0];
+        rY[0][2] = -1 * vAbout[0];
         rY[2][0] = vAbout[0];
         rY[2][2] = d;
 
         // u dot v = |u||v|cos(theta)
         // since u, v normalized, their maginudes are 1 therefore theta = arccos(u dot v)
-        let theta = Math.acos(dotProduct(vStart, vEnd)) * (90 / Math.PI);
-        console.log(theta);
-
-        ctms = mmMult(ctms, mmMult(matrixTranspose(rX), mmMult(rY, mmMult(rotateZ(theta), mmMult(matrixTranspose(rY), rX)))));
-        display();
+        let theta = Math.acos(dotProduct(vStart, vEnd)) * 2.5//* (180 / Math.PI);
+        trackBallCtm = mmMult(mmMult(matrixTranspose(rX), mmMult(rY, mmMult(rotateZ(theta), mmMult(matrixTranspose(rY), rX)))), trackBallCtm);
     }
 }
 
 // when doing the trackball rotation, if user clicks and drags for a short amount of time,
 // object will continue moving in the direction and the desired speed indefinitely =
 function trackBallAnimate() {
-
+    // if moving glass ball for .8 seconds or less, use that ctm to spin
+    if (timeEnd - timeStart <= 800) {
+        // call the animation
+        isAnimating = true;
+        requestAnimationFrame(spinning);
+    }
 }
+
+// frictionless spinning animation
+function spinning() {
+    getTrackBallCtm();
+    display();
+    if (isAnimating) requestAnimationFrame(spinning);
+}
+
 
 // performs scaling when using mouse scroll wheel
 let scaleFactor = 1;
@@ -248,7 +283,7 @@ function mouseWheelCallback(event) {
     else if (event.wheelDeltaY < 0) {
         scaleFactor -= .02;
     }
-    ctms = scaling(scaleFactor, scaleFactor, scaleFactor);
+    scalingCtm = scaling(scaleFactor, scaleFactor, scaleFactor);
 
     // display
     display(currObj);
@@ -267,15 +302,19 @@ function main() {
     canvas.onmousemove = mouseMoveCallback;
     canvas.onwheel = mouseWheelCallback;
 
+    // generate shapes
     genCone({ degrees: 10 });
-    genCube({ degrees: 90 });
+    genCube();
     genCylinder({ degrees: 10 });
-    genSphere({ x: 15, y: 15 });
-    genTorus({});
+    genSphere({ x: 10, y: 10 });
+    genTorus({ y: 20, z: 10 });
 
     currObj = 'Sphere';
 
+    // init ctms
     ctms = createIdentity();
+    scalingCtm = createIdentity();
+    trackBallCtm = createIdentity();
 
     init(positions, colors);
     display();
@@ -320,7 +359,7 @@ function genSphere(arg) {
 // generate torus vertices/colors
 function genTorus(arg) {
     torusStart = positions.length;
-    generateTorusVertices(positions);
+    generateTorusVertices(positions, arg.y, arg.z);
     torusEnd = positions.length;
     generateColors(colors, torusEnd - torusStart);
 }
@@ -329,7 +368,6 @@ function genTorus(arg) {
 function display() {
     let start;
     let end;
-
     switch (currObj) {
         case 'Cone':
             start = coneStart;
@@ -356,6 +394,7 @@ function display() {
             return;
     }
 
+    ctms = mmMult(scalingCtm, trackBallCtm);
     // Clear
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     // Set the ctm
@@ -364,58 +403,10 @@ function display() {
     gl.drawArrays(gl.TRIANGLES, start, end - start);
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-let translates = [
-    [0, .5, 0],
-    [.5, .5, 0],
-    [.5, 0, 0],
-    [.5, -.5, 0],
-    [0, -.5, 0],
-    [-.5, -.5, 0],
-    [-.5, 0, 0,],
-    [-.5, .5, 0]
-]
-let currTranslate = 0;
-
-function animate() {
-    degree += .5;
-    if (degree > 360) {
-        degree = 0;
-
-        currTranslate++
-        if (currTranslate > translates.length - 1) currTranslate = 0;
-
-    }
-
-    if (currAxis === 'z') ctms = rotateZ(degree);
-    else if (currAxis === 'y') ctms = rotateY(degree);
-    else if (currAxis === 'x') ctms = rotateX(degree);
-    else if (currAxis === 'custom') ctms = mmMult(rotateX(degree), mmMult(rotateZ(degree), mmMult(rotateY(degree), scaling(.5, .5, .5))));
-    else ctms = null;
-
-
-    //let curr = translates[currTranslate];
-    //ctms = mmMult(translate(curr[0], curr[1], curr[2]), ctms);
-
-
-    display();
-
-    if (isAnimating) requestAnimationFrame(animate);
-
-}
-
 function debug() {
     console.log(`positions length - ${positions.length}`);
     console.log(`colors length - ${colors.length}`);
+
+    console.log(`sphere length - ${sphereEnd - sphereStart}`);
+    console.log(`torus length - ${torusEnd - torusStart}`);
 }

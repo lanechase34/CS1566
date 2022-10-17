@@ -4,6 +4,7 @@ function generateConeVertices(positions, degrees) {
     let from = 0;
     let to = 360;
 
+    let start = positions.length;
     // generate bottom circle of cone
     for (let curr = from; curr < to; curr += degrees) {
         // first vertex always at origin
@@ -22,5 +23,13 @@ function generateConeVertices(positions, degrees) {
         positions.push([Math.cos(curr * (Math.PI / 180)), 0, Math.sin(curr * (Math.PI / 180)), 1]);
     }
 
+    let end = positions.length;
+
+    // translate cone to origin and make more cone-ey
+    let move = translate(0, -.5, 0);
+    let shrink = scaling(-.5, 1, -.5);
+    for (let i = start; i < end; i++) {
+        positions[i] = matrixVectorMult(mmMult(shrink, move), positions[i]);
+    }
     return;
 }

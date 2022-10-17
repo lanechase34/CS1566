@@ -1,5 +1,5 @@
 // generate vertices needed for torus
-function generateTorusVertices(positions) {
+function generateTorusVertices(positions, y, z) {
     // start with basis point
     // y axis defines radius about origin 
     let radius = .3;
@@ -8,9 +8,6 @@ function generateTorusVertices(positions) {
     // create circle to base bands off of
     // translate matrix will bring starting circle to the right by adding x
     let tCtm = translate((1 - radius), 0, 0);
-
-    let z = 15;
-    let y = 15;
 
     // debug
     let fromY = 0;
@@ -32,26 +29,23 @@ function generateTorusVertices(positions) {
             let bottomZCtm = rotateZ(j + z);
 
             // assume looking from outside at circles (two | lines)
-
             // left circle triangles
             // top left
             positions.push(matrixVectorMult(mmMult(leftYCtm, mmMult(tCtm, topZCtm)), point));
-            // bottom left
-            positions.push(matrixVectorMult(mmMult(leftYCtm, mmMult(tCtm, bottomZCtm)), point));
             // top right
             positions.push(matrixVectorMult(mmMult(rightYCtm, mmMult(tCtm, topZCtm)), point));
+            // bottom left
+            positions.push(matrixVectorMult(mmMult(leftYCtm, mmMult(tCtm, bottomZCtm)), point));
 
             // right circle triangles
             // top right
             positions.push(matrixVectorMult(mmMult(rightYCtm, mmMult(tCtm, topZCtm)), point));
-            // bottom left
-            positions.push(matrixVectorMult(mmMult(leftYCtm, mmMult(tCtm, bottomZCtm)), point));
             // bottom right
             positions.push(matrixVectorMult(mmMult(rightYCtm, mmMult(tCtm, bottomZCtm)), point));
+            // bottom left
+            positions.push(matrixVectorMult(mmMult(leftYCtm, mmMult(tCtm, bottomZCtm)), point));
         }
     }
-
-
 
     return;
 }
