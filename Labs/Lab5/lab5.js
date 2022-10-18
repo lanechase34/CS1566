@@ -80,12 +80,34 @@ let ctms = [];
 
 // store maze
 let maze;
+// store solution
+let solution;
+
+// top left cell @ 1,1 
+// bottom right cell @ 15,15
+// 8x8 maze represented as 17x17 array
+// indices 0-16, so 15,15 is the last cell in bottom right
+// start of maze
+let start = [1, 1];
+// what direction you enter maze from
+let direction = 4;
+// exit of maze
+let end = [15, 15];
 
 // key down call back
 function keyDownCallback(event) {
     switch (event.keyCode) {
         case 71:
-            generateMaze(maze, 8, 8);
+            maze = generateMaze({ cols: 8, rows: 8 });
+            break;
+    }
+    switch (event.keyCode) {
+        case 83:
+            solution = createMatrix(maze.length, maze[0].length);
+            solved = false;
+            // solve the maze
+            solveMaze(maze, start, end, direction, solution);
+            printMaze(maze, true, solution);
             break;
     }
 }
@@ -101,7 +123,9 @@ function main() {
     ctms = createIdentity();
 
     maze = generateMaze({ cols: 8, rows: 8 });
-    init(positions, colors);
+
+    //init(positions, colors);
+
 }
 
 
