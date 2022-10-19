@@ -32,53 +32,28 @@ function generatePiece(positions, colors, color, pieceCtm, moveCtm) {
     return;
 }
 
-
+// Generate 3D maze by making calls to generate each wall / pillar individually
 function generate3DMaze(maze, positions, colors) {
-
-    // gen world
+    // gen world platform
     generatePiece(positions, colors, orange, planeCtm, createIdentity());
 
-    // gen pillars
-    for (let i = -4; i <= 4; i++) {
-        for (let j = -4; j <= 4; j++) {
-            generatePiece(positions, colors, grey, pillarCtm, translate(i, 0, j));
-        }
+    // generate maze 
+    for (let col = 0; col < maze.length; col++) {
+        for (let row = 0; row < maze[0].length; row++) {
+            // (even, even) - pillar wall
+            // (even, odd) - vertial wall
+            // (odd, even) - horizontal wall
+            // (odd, odd) - cell (empty)
 
-    }
-
-    // gen perimeter wall
-    for (let i = -4; i < 4; i++) {
-        // col (vertical) walls
-        // top left opening
-        if (i != -4) {
-            generatePiece(positions, colors, red, wallCtm, mmMult(translate(-4, 0, i + .5), rotateY(90)));
-        }
-        // bottom right opening
-        if (i != 3) {
-            generatePiece(positions, colors, red, wallCtm, mmMult(translate(4, 0, i + .5), rotateY(90)));
-
-        }
-
-        // row (horizontal) walls
-        generatePiece(positions, colors, green, wallCtm, mmMult(translate(i + .5, 0, -4), rotateY(0)));
-        generatePiece(positions, colors, green, wallCtm, mmMult(translate(i + .5, 0, 4), rotateY(0)));
-    }
-
-
-    // generate chamber walls
-
-    // change to 0 - maze.length and generate entire maze in loops
-    for (let col = 1; col < maze.length - 1; col++) {
-        for (let row = 1; row < maze[0].length - 1; row++) {
-            // if pillar wall (even, even)
+            // if pillar wall
             if (col % 2 === 0 && row % 2 === 0) {
-
+                generatePiece(positions, colors, grey, pillarCtm, translate((col - 8) / 2, 0, (row - 8) / 2));
             }
             // not pillar wall
             else {
                 // if current col,row is a wall
                 if (maze[col][row] === 1) {
-                    // figure out if vertical or horizontal wall
+                    // determine if vertical or horizontal wall
                     // even column means vertical wall
                     if (col % 2 === 0) {
                         generatePiece(positions, colors, red, wallCtm, mmMult(translate((col - 8) / 2, 0, (row - 8) / 2), rotateY(90)));
@@ -89,19 +64,7 @@ function generate3DMaze(maze, positions, colors) {
                     }
                 }
             }
-
         }
     }
-    // gen world
-    // loop over maze
-    // for i < col
-    // for i < row
-
-    // if even,even - pillar piece
-    // if even,odd / odd,even - wall piece
-    // even,odd - vertical wall
-    // odd,even - horizontal wall
-    // odd,odd - cells (empty)
-
     return;
 }

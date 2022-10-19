@@ -69,13 +69,9 @@ function init(positions, colors) {
 }
 
 
-
-
-
 // intialize positions/colors arrays
 let positions = [];
 let colors = [];
-
 
 // current transformation matrix
 let ctms = [];
