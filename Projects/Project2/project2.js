@@ -117,6 +117,8 @@ function keyDownCallback(event) {
 let orange = [255, 140, 0];
 let grey = [105, 105, 105];
 let black = [0, 0, 0];
+let red = [255, 0, 0];
+let green = [0, 255, 0];
 
 
 // main driver
@@ -131,9 +133,8 @@ function main() {
     canvas.onmousemove = mouseMoveCallback;
     canvas.onwheel = mouseWheelCallback;
 
-    generateWorld(positions, colors, orange);
-    generatePillar(positions, colors, grey, createIdentity());
-
+    maze = generateMaze({ cols: 8, rows: 8 });
+    generate3DMaze(maze, positions, colors);
     // init ctms
     ctms = createIdentity();
     scalingCtm = createIdentity();

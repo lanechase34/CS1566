@@ -1,24 +1,42 @@
+// Maze data structure operations
 
-// generate maze with width - cols, height - rows
+/**
+ * Generate maze
+ * @param {} args column length, row length
+ * @returns 
+ */
 function generateMaze(args) {
     console.log('Generating Maze');
-    // create datastructure needed
-    //
+
+    // create empty maze (outside walls only)
     let maze = generateEmptyMaze(args.cols, args.rows);
 
+    // call create chamber recursively to fill in maze
     let cols = maze.length;
     let rows = maze[0].length;
     createChamber(maze, 0, cols - 1, 0, rows - 1);
 
     // create openings in top left / bottom right
     maze[0][1] = 0;
-    maze[16][15] = 0;
+    maze[args.cols * 2][args.rows * 2 - 1] = 0;
 
     printMaze(maze);
     return maze;
 }
 
-// create maze chamber
+/**
+ * Create maze chamber
+ * Generates random point inside current boundaries
+ * Builds vertical and horizontal walls from point
+ * Chooses 3 random directions and generates random holes in those walls
+ * @param {*} maze - 2D array for maze
+ * @param {*} fromCol - left bound for col
+ * @param {*} toCol - right bound for col
+ * @param {*} fromRow - top bound for row
+ * @param {*} toRow - bottom bound for row
+ * @param {*} debug - debug message 
+ * @returns 
+ */
 function createChamber(maze, fromCol, toCol, fromRow, toRow, debug = 'start') {
     // pick position in chamber that is not on an outside wall
     // random position must be between +2 fromCol/fromRow and -2 toCol/toRow (excludes the outside walls)
@@ -109,7 +127,12 @@ function createChamber(maze, fromCol, toCol, fromRow, toRow, debug = 'start') {
     return;
 }
 
-// pretty print maze
+/**
+ * Pretty print maze with option to overlay solution in maze
+ * @param {array} maze - maze to print
+ * @param {boolean} printSolution - should we print solution in maze
+ * @param {array} solution - solution matrix with cells filled in with 1s
+ */
 function printMaze(maze, printSolution = false, solution = null) {
     let cols = maze.length;
     let rows = maze[0].length;
@@ -169,6 +192,13 @@ function printMaze(maze, printSolution = false, solution = null) {
 // generate empty maze with perimeter walls defined/
 // maze is defined column major
 // maze[0] represents 1st col
+
+/**
+ * Generate empty chamber maze with outside walls only
+ * @param cols - column size
+ * @param rows - row size
+ * @returns 
+ */
 function generateEmptyMaze(cols, rows) {
     maze = createMatrix((cols * 2) + 1, (rows * 2) + 1);
     for (let c = 0; c < (cols * 2) + 1; c++) {
@@ -196,7 +226,9 @@ function generateEmptyMaze(cols, rows) {
     return maze;
 }
 
+// debug
 let directions = ['north', 'east', 'south', 'west'];
+
 /**
  * Solve maze recursively using backtracking
  * @param {maze} maze - maze 
@@ -206,7 +238,6 @@ let directions = ['north', 'east', 'south', 'west'];
  * @param {matrix} solution - solution 2D array (matrix)
  */
 let solved = false;
-
 function solveMaze(maze, curr, end, direction, solution) {
     let col = curr[0];
     let row = curr[1];
