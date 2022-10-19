@@ -66,6 +66,8 @@ function generate3DMaze(maze, positions, colors) {
 
 
     // generate chamber walls
+
+    // change to 0 - maze.length and generate entire maze in loops
     for (let col = 1; col < maze.length - 1; col++) {
         for (let row = 1; row < maze[0].length - 1; row++) {
             // if pillar wall (even, even)
