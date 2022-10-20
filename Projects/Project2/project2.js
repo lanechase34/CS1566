@@ -80,9 +80,12 @@ let ctms = [];
 let maze;
 // store maze solution
 let solution;
+// maze dimensions
+let cols = 8;
+let rows = 8;
 
 // top left cell @ 1,1 
-// bottom right cell @ 15,15
+// bottom right cell @ 15,15 (cols * 2 - 1),(rows * 2 - 1)
 // 8x8 maze represented as 17x17 array
 // indices 0-16, so 15,15 is the last cell in bottom right
 // start of maze
@@ -90,13 +93,13 @@ let start = [1, 1];
 // what direction you enter maze from
 let direction = 4;
 // exit of maze
-let end = [15, 15];
+let end = [(cols * 2) - 1, (rows * 2 - 1)];
 
 // key down call back
 function keyDownCallback(event) {
     switch (event.keyCode) {
         case 71:
-            maze = generateMaze({ cols: 8, rows: 8 });
+            maze = generateMaze({ cols: cols, rows: rows });
             break;
     }
     switch (event.keyCode) {
@@ -115,6 +118,8 @@ let grey = [105, 105, 105];
 let black = [0, 0, 0];
 let red = [255, 0, 0];
 let green = [0, 255, 0];
+let white = [255, 255, 255];
+
 
 
 // main driver
@@ -129,7 +134,7 @@ function main() {
     canvas.onmousemove = mouseMoveCallback;
     canvas.onwheel = mouseWheelCallback;
 
-    maze = generateMaze({ cols: 8, rows: 8 });
+    maze = generateMaze({ cols: cols, rows: rows });
     generate3DMaze(maze, positions, colors);
     // init ctms
     ctms = createIdentity();

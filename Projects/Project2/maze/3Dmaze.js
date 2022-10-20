@@ -1,8 +1,8 @@
 
+let planeCtm;
+let pillarCtm;
+let wallCtm;
 
-let planeCtm = scaling(9, .1, 9);
-let pillarCtm = mmMult(translate(0, 1, 0), scaling(.2, 1, .2));
-let wallCtm = mmMult(translate(0, 1, 0), scaling(1, 1, .1));
 
 /**
  * 
@@ -34,6 +34,13 @@ function generatePiece(positions, colors, color, pieceCtm, moveCtm) {
 
 // Generate 3D maze by making calls to generate each wall / pillar individually
 function generate3DMaze(maze, positions, colors) {
+    // generate individual pieces
+    let mazeCol = (maze.length - 1) / 2;
+    let mazeRow = (maze[0].length - 1) / 2;
+    planeCtm = mmMult(translate((mazeCol - 8) / 2, 0, (mazeRow - 8) / 2), scaling(mazeCol + 1.5, .1, mazeRow + 1.5));
+    pillarCtm = mmMult(translate(0, .55, 0), scaling(.2, 1, .2));
+    wallCtm = mmMult(translate(0, .55, 0), scaling(.8, 1, .1));
+
     // gen world platform
     generatePiece(positions, colors, orange, planeCtm, createIdentity());
 
