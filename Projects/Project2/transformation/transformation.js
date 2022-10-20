@@ -90,3 +90,12 @@ function rotateY(degrees) {
         return result;
     }
 }
+
+
+function look_at(eye, at, up) {
+    return;
+}
+
+function ortho(left, right, bottom, top, near, far) {
+    return;
+}
