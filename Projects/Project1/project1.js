@@ -307,7 +307,7 @@ function main() {
     genCube();
     genCylinder({ degrees: 10 });
     genSphere({ x: 10, y: 10 });
-    genTorus({ y: 20, z: 10 });
+    genTorus({ y: 10, z: 10 });
 
     currObj = 'Sphere';
 

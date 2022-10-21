@@ -75,3 +75,10 @@ function generate3DMaze(maze, positions, colors) {
     }
     return;
 }
+
+/**
+ * Animate over the solution matrix and 3D solve the maze by using animations
+ */
+function animateSolve() {
+
+}
