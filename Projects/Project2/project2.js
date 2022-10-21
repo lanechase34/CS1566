@@ -6,6 +6,8 @@
 var gl = null;
 var canvas = null;
 var ctm_location;
+var model_view_location;
+var projection_location;
 
 function initGL(canvas) {
     gl = canvas.getContext("webgl");
@@ -65,6 +67,21 @@ function init(positions, colors) {
         alert("Unable to locate ctm");
         return -1;
     }
+
+    // Model View Matrix - Locate and enable "model_view"
+    model_view_location = gl.getUniformLocation(shaderProgram, "model_view");
+    if (model_view_location == -1) {
+        alert("Unable to locate model view");
+        return -1;
+    }
+
+    // Project Matrix - Locate and enable "projection"
+    projection_location = gl.getUniformLocation(shaderProgram, "projection");
+    if (projection_location == -1) {
+        alert("Unable to locate projection");
+        return -1;
+    }
+
     return 0;
 }
 
@@ -75,6 +92,10 @@ let colors = [];
 
 // current transformation matrix
 let ctms = [];
+// model view matrix
+let model_view = [];
+// projection matrix
+let projection = [];
 
 // store maze
 let maze;
@@ -106,9 +127,11 @@ function keyDownCallback(event) {
         case 83:
             solution = createMatrix(maze.length, maze[0].length);
             solved = false;
+            solutionLength = 0;
             // solve the maze
             solveMaze(maze, start, end, direction, solution);
             printMaze(maze, true, solution);
+            console.log(`Solution step length - ${solutionLength}`);
             break;
     }
 }
@@ -119,8 +142,6 @@ let black = [0, 0, 0];
 let red = [255, 0, 0];
 let green = [0, 255, 0];
 let white = [255, 255, 255];
-
-
 
 // main driver
 function main() {
@@ -136,24 +157,34 @@ function main() {
 
     maze = generateMaze({ cols: cols, rows: rows });
     generate3DMaze(maze, positions, colors);
+
+
     // init ctms
     ctms = createIdentity();
     scalingCtm = createIdentity();
     trackBallCtm = createIdentity();
+
+    // init model_view & projection matrix
+    model_view = createIdentity();
+    projection = createIdentity();
+
     init(positions, colors);
     display();
-
 }
 
 
-// calls draw arrays to draw cone
+// Display the current positions array and apply our transformation matricess
 function display() {
     ctms = mmMult(scalingCtm, trackBallCtm);
     // Clear
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    // Set the ctm
+
+    // Set the matrices
     gl.uniformMatrix4fv(ctm_location, false, to1DF32Array(ctms));
-    // draw triangles
+    gl.uniformMatrix4fv(model_view_location, false, to1DF32Array(model_view));
+    gl.uniformMatrix4fv(projection_location, false, to1DF32Array(projection));
+
+    // Draw our positions array
     gl.drawArrays(gl.TRIANGLES, 0, positions.length);
 }
 

@@ -237,7 +237,10 @@ let directions = ['north', 'east', 'south', 'west'];
  * @param {direction} direction - 1,2,3,4 / n,e,s,w respectively where you entered the current cell from
  * @param {matrix} solution - solution 2D array (matrix)
  */
+
 let solved = false;
+// track solution step length
+let solutionLength = 0;
 function solveMaze(maze, curr, end, direction, solution) {
     let col = curr[0];
     let row = curr[1];
@@ -250,6 +253,7 @@ function solveMaze(maze, curr, end, direction, solution) {
         console.log('Solved Maze!');
         solved = true;
         solution[col][row] = 1;
+        solutionLength++;
         return;
     }
 
@@ -320,6 +324,7 @@ function solveMaze(maze, curr, end, direction, solution) {
     }
     if (solved) {
         solution[col][row] = 1;
+        solutionLength++;
         return;
     }
     return;

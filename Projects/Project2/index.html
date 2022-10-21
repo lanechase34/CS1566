@@ -36,6 +36,8 @@
     varying vec4 color;
 
     uniform mat4 ctm;
+    uniform mat4 model_view;
+    uniform mat4 projection;
 
     // toRHR (to right-hand rule)
     // DO NOT MODIFY THE toRHR VARIABLE
@@ -46,7 +48,7 @@
     
     void main()
     {
-      vec4 position = ctm * vPosition;
+      vec4 position = projection * model_view * ctm * vPosition;
       color = vColor;
       
       // DO NOT MODIFY THE NEXT LINE
