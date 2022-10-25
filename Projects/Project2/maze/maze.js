@@ -226,8 +226,9 @@ function generateEmptyMaze(cols, rows) {
     return maze;
 }
 
-// debug
-let directions = ['north', 'east', 'south', 'west'];
+// debug for solution
+let directions = ['north', 'east', 'south', 'west', 'random position'];
+let debugMaze = false;
 
 /**
  * Solve maze recursively using backtracking
@@ -239,14 +240,18 @@ let directions = ['north', 'east', 'south', 'west'];
  */
 
 let solved = false;
+
 // track solution step length
 let solutionLength = 0;
 function solveMaze(maze, curr, end, direction, solution) {
     let col = curr[0];
     let row = curr[1];
-    // console.log('\n');
-    // console.log(`coming from direction ${directions[direction - 1]}`);
-    // console.log(`solving cell - ${col},${row}`);
+
+    if (debugMaze) {
+        console.log('\n');
+        console.log(`coming from direction ${directions[direction - 1]}`);
+        console.log(`solving cell - ${col},${row}`);
+    }
 
     // if at exit
     if (col == end[0] && row == end[1]) {
@@ -277,8 +282,11 @@ function solveMaze(maze, curr, end, direction, solution) {
         case 4:
             if (maze[col][row - 1] == 1 && maze[col + 1][row] && maze[col][row + 1] == 1) deadEnd = true;
             break;
+        // random position
+        case 5:
+            break;
     }
-    // if there is no where left to go (deadEnd) return
+    // if there is nowhere left to go (deadEnd) return
     if (deadEnd) {
         solution[col][row] = 0;
         return false;
@@ -316,8 +324,8 @@ function solveMaze(maze, curr, end, direction, solution) {
     if (!solved) {
         // did not enter from west
         if (direction !== 4) {
-            // go west (enter from east)
-            if (maze[col - 1][row] !== 1) {
+            // go west (enter from east) (make sure we aren't going through entrance either since entrance is empty wall)
+            if (maze[col - 1][row] !== 1 && col - 2 > 0) {
                 solveMaze(maze, [col - 2, row], end, 2, solution);
             }
         }

@@ -102,29 +102,41 @@ let maze;
 // store maze solution
 let solution;
 // maze dimensions
-let cols = 8;
-let rows = 8;
+let colsDim = 8;
+let rowsDim = 8;
 
 // top left cell @ 1,1 
 // bottom right cell @ 15,15 (cols * 2 - 1),(rows * 2 - 1)
 // 8x8 maze represented as 17x17 array
 // indices 0-16, so 15,15 is the last cell in bottom right
+
 // start of maze
 let start = [1, 1];
 // what direction you enter maze from
 let direction = 4;
 // exit of maze
-let end = [(cols * 2) - 1, (rows * 2 - 1)];
+let end = [(colsDim * 2) - 1, (rowsDim * 2 - 1)];
 
 // key down call back
 function keyDownCallback(event) {
     switch (event.keyCode) {
+        // generate maze
         case 71:
-            maze = generateMaze({ cols: cols, rows: rows });
+            // generate maze and 3D maze and send to graphics
+            maze = generateMaze({ cols: colsDim, rows: rowsDim });
+            positions = [];
+            colors = [];
+            generate3DMaze(maze, positions, colors);
+            init(positions, colors);
+            display();
             break;
-    }
-    switch (event.keyCode) {
-        case 83:
+        // solve maze
+        case 86:
+            // test random position solution
+            start = [(Math.floor(Math.random() * (colsDim * 2) / 2) * 2) + 1, (Math.floor(Math.random() * (rowsDim * 2) / 2) * 2) + 1];
+            console.log(`trying solution from ${start} to ${end}`);
+            direction = 5;
+
             solution = createMatrix(maze.length, maze[0].length);
             solved = false;
             solutionLength = 0;
@@ -133,10 +145,31 @@ function keyDownCallback(event) {
             printMaze(maze, true, solution);
             console.log(`Solution step length - ${solutionLength}`);
             break;
+        // move forward
+        case 87:
+            console.log('moving forward');
+            break;
+        // move backward
+        case 83:
+            console.log('moving backward');
+            break;
+        // move left
+        case 65:
+            console.log('moving left');
+            break;
+        // move right
+        case 68:
+            console.log('moving right');
+            break;
+        // map view
+        case 32:
+            break;
     }
 }
 
+// colors for world in RGB
 let orange = [255, 140, 0];
+let darkorange = [220, 88, 42];
 let grey = [105, 105, 105];
 let black = [0, 0, 0];
 let red = [255, 0, 0];
@@ -155,9 +188,8 @@ function main() {
     canvas.onmousemove = mouseMoveCallback;
     canvas.onwheel = mouseWheelCallback;
 
-    maze = generateMaze({ cols: cols, rows: rows });
+    maze = generateMaze({ cols: colsDim, rows: rowsDim });
     generate3DMaze(maze, positions, colors);
-
 
     // init ctms
     ctms = createIdentity();

@@ -22,6 +22,8 @@
   <script src="maze/3Dmaze.js"></script>
   <!-- track ball movement and scaling -->
   <script src="common/trackBall.js"></script>
+  <!-- viewing -->
+  <script src="viewing/viewing.js"></script>
   <!-- The main program -->
   <script type="text/javascript" src="project2.js"></script>
 
@@ -70,16 +72,23 @@
 
   <body onload="main();">
     <h1>Project 2</h1>
-    <canvas id="gl-canvas" width="512" height="512">
-      Sorry;
-    </canvas>
-    <p>
-    <ul>
-      <li>g - Generate Maze</li>
-      <li>s - Solve Maze</li>
-      <br>
-    </ul>
-    </p>
+    <div style="display: flex">
+      <canvas id="gl-canvas" width="768" height="768">
+        Sorry;
+      </canvas>
+      <p>
+      <ul>
+        <li>g - generate maze</li>
+        <li>w - move forward</li>
+        <li>s - move backward</li>
+        <li>a - move left</li>
+        <li>d - move right</li>
+        <li>space - map view</li>
+        <li>v - solve maze</li>
+        <br>
+      </ul>
+      </p>
+    </div>
   </body>
 
 </html>

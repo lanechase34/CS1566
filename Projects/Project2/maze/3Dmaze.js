@@ -37,7 +37,7 @@ function generate3DMaze(maze, positions, colors) {
     // generate individual pieces
     let mazeCol = (maze.length - 1) / 2;
     let mazeRow = (maze[0].length - 1) / 2;
-    planeCtm = mmMult(translate((mazeCol - 8) / 2, 0, (mazeRow - 8) / 2), scaling(mazeCol + 1.5, .1, mazeRow + 1.5));
+    planeCtm = mmMult(translate((mazeCol - colsDim) / 2, 0, (mazeRow - rowsDim) / 2), scaling(mazeCol + 1.5, .1, mazeRow + 1.5));
     pillarCtm = mmMult(translate(0, .55, 0), scaling(.2, 1, .2));
     wallCtm = mmMult(translate(0, .55, 0), scaling(.8, 1, .1));
 
@@ -54,7 +54,7 @@ function generate3DMaze(maze, positions, colors) {
 
             // if pillar wall
             if (col % 2 === 0 && row % 2 === 0) {
-                generatePiece(positions, colors, grey, pillarCtm, translate((col - 8) / 2, 0, (row - 8) / 2));
+                generatePiece(positions, colors, grey, pillarCtm, translate((col - colsDim) / 2, 0, (row - rowsDim) / 2));
             }
             // not pillar wall
             else {
@@ -63,11 +63,11 @@ function generate3DMaze(maze, positions, colors) {
                     // determine if vertical or horizontal wall
                     // even column means vertical wall
                     if (col % 2 === 0) {
-                        generatePiece(positions, colors, red, wallCtm, mmMult(translate((col - 8) / 2, 0, (row - 8) / 2), rotateY(90)));
+                        generatePiece(positions, colors, red, wallCtm, mmMult(translate((col - colsDim) / 2, 0, (row - rowsDim) / 2), rotateY(90)));
                     }
                     // else horizontal wall
                     else {
-                        generatePiece(positions, colors, green, wallCtm, mmMult(translate((col - 8) / 2, 0, (row - 8) / 2), rotateY(0)));
+                        generatePiece(positions, colors, green, wallCtm, mmMult(translate((col - colsDim) / 2, 0, (row - rowsDim) / 2), rotateY(0)));
                     }
                 }
             }

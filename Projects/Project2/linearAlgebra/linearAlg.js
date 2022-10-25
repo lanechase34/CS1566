@@ -84,7 +84,7 @@ function printMatrix(m) {
     let cols = m.length;
     let rows = m[0].length;
 
-    let output = '+';
+    let output = '';
     for (let i = 0; i < rows; i++) {
         for (let j = 0; j < cols; j++) {
             output = output + " " + m[j][i].toFixed(4);

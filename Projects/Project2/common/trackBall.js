@@ -116,7 +116,7 @@ function getTrackBallCtm() {
 
 // performs scaling when using mouse scroll wheel
 let scaleFactor = 1;
-let increment = .04;
+let increment = .02;
 function mouseWheelCallback(event) {
     // scale up
     if (event.wheelDeltaY > 0) {
