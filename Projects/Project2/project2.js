@@ -102,8 +102,8 @@ let maze;
 // store maze solution
 let solution;
 // maze dimensions
-let colsDim = 8;
-let rowsDim = 8;
+let colsDim = 50;
+let rowsDim = 50;
 
 // top left cell @ 1,1 
 // bottom right cell @ 15,15 (cols * 2 - 1),(rows * 2 - 1)
@@ -133,9 +133,12 @@ function keyDownCallback(event) {
         // solve maze
         case 86:
             // test random position solution
-            start = [(Math.floor(Math.random() * (colsDim * 2) / 2) * 2) + 1, (Math.floor(Math.random() * (rowsDim * 2) / 2) * 2) + 1];
-            console.log(`trying solution from ${start} to ${end}`);
-            direction = 5;
+            // to solve from random position, use direction = 5 and the current coords
+            // start = [(Math.floor(Math.random() * (colsDim * 2) / 2) * 2) + 1, (Math.floor(Math.random() * (rowsDim * 2) / 2) * 2) + 1];
+            // console.log(`trying solution from ${start} to ${end}`);
+            // direction = 5;
+
+
 
             solution = createMatrix(maze.length, maze[0].length);
             solved = false;
@@ -143,7 +146,9 @@ function keyDownCallback(event) {
             // solve the maze
             solveMaze(maze, start, end, direction, solution);
             printMaze(maze, true, solution);
-            console.log(`Solution step length - ${solutionLength}`);
+
+            // animate over solution array?
+            // animate()
             break;
         // move forward
         case 87:
