@@ -1,8 +1,8 @@
-
+// These define our pieces that make up the maze
+// Each piece will have the same predefined CTM to adjust the shape to desired specifications and orient properly
 let planeCtm;
 let pillarCtm;
 let wallCtm;
-
 
 /**
  * 
@@ -13,7 +13,6 @@ let wallCtm;
  * @param ctm - ctm to move piece to desired location / orientation
  */
 function generatePiece(positions, colors, color, pieceCtm, moveCtm) {
-
     // generate 'cube' and colors
     let start = positions.length;
     generateCubeVertices(positions);
@@ -32,11 +31,18 @@ function generatePiece(positions, colors, color, pieceCtm, moveCtm) {
     return;
 }
 
-// Generate 3D maze by making calls to generate each wall / pillar individually
+/**
+ * Generate 3D maze by making calls to generate each wall / pillar individually
+ * @param maze - maze to convert to 3D
+ * @param positions - global positions array
+ * @param colors - global colors array 
+ * @returns 
+ */
 function generate3DMaze(maze, positions, colors) {
     // generate individual pieces
     let mazeCol = (maze.length - 1) / 2;
     let mazeRow = (maze[0].length - 1) / 2;
+    // set each piece CTM
     planeCtm = mmMult(translate((mazeCol - colsDim) / 2, 0, (mazeRow - rowsDim) / 2), scaling(mazeCol + 1.5, .1, mazeRow + 1.5));
     pillarCtm = mmMult(translate(0, .55, 0), scaling(.2, 1, .2));
     wallCtm = mmMult(translate(0, .55, 0), scaling(.8, 1, .1));

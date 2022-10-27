@@ -102,8 +102,8 @@ let maze;
 // store maze solution
 let solution;
 // maze dimensions
-let colsDim = 50;
-let rowsDim = 50;
+let colsDim = 8;
+let rowsDim = 8;
 
 // top left cell @ 1,1 
 // bottom right cell @ 15,15 (cols * 2 - 1),(rows * 2 - 1)
@@ -168,8 +168,25 @@ function keyDownCallback(event) {
             break;
         // map view
         case 32:
+            console.log('map view');
             break;
     }
+}
+
+// function to move camera in direction?
+function move(direction) {
+
+}
+
+// function to animate camera move?
+function animateMove() {
+
+}
+
+// functino to move camera for map view?
+// can animate this also?
+function mapView() {
+
 }
 
 // colors for world in RGB

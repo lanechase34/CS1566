@@ -42,7 +42,7 @@ function createChamber(maze, fromCol, toCol, fromRow, toRow, debug = 'start') {
     // random position must be between +2 fromCol/fromRow and -2 toCol/toRow (excludes the outside walls)
 
     // exit condition
-    // if the cell is only 1 width or 1 height we return (1x1) cell
+    // if the cell is only 1 width or 1 height we return (1 by x) / (x by 1) cell
     if (fromCol + 2 === toCol || fromRow + 2 === toRow) {
         return;
     }
@@ -238,9 +238,7 @@ let debugMaze = false;
  * @param {direction} direction - 1,2,3,4 / n,e,s,w respectively where you entered the current cell from
  * @param {matrix} solution - solution 2D array (matrix)
  */
-
 let solved = false;
-
 // track solution step length
 let solutionLength = 0;
 function solveMaze(maze, curr, end, direction, solution) {
@@ -255,14 +253,14 @@ function solveMaze(maze, curr, end, direction, solution) {
 
     // if at exit
     if (col == end[0] && row == end[1]) {
-        console.log('Solved Maze!');
+        if (debugMaze) console.log('Solved Maze!');
         solved = true;
         solution[col][row] = 1;
         solutionLength++;
         return;
     }
 
-    // check if current position is a dead end
+    // check if current position is a dead end (defined as walls surrounding every direction you did not enter from)
     // exclude direction we are coming from
     let deadEnd = false;
     switch (direction) {
