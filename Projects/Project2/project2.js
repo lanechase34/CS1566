@@ -117,6 +117,14 @@ let direction = 4;
 // exit of maze
 let end = [(colsDim * 2) - 1, (rowsDim * 2 - 1)];
 
+// current position of person in maze
+let currPosition = [];
+// current direction person is facing
+let currDirection = 5;
+// direction person wants to move
+let currMoveDirection = 5;
+let isAnimating = false;
+
 // key down call back
 function keyDownCallback(event) {
     switch (event.keyCode) {
@@ -169,6 +177,9 @@ function keyDownCallback(event) {
         // map view
         case 32:
             console.log('map view');
+
+            // create look at for top of maze and zoom out?
+
             break;
     }
 }
@@ -186,6 +197,11 @@ function animateMove() {
 // functino to move camera for map view?
 // can animate this also?
 function mapView() {
+
+}
+
+// verify we can move this direction
+function verifyMove() {
 
 }
 

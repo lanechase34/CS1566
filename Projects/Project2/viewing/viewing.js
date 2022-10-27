@@ -1,7 +1,26 @@
 // Functions for viewing world
 
+/**
+ * 
+ * @param eye camera placed at 
+ * @param at what camera points at
+ * @param up up vector of camera for tilt
+ * @returns 4x4 matrix
+ */
 function look_at(eye, at, up) {
-    return;
+    // create matrix?
+    let result = createMatrix(4, 4);
+
+    // calculat VPN
+
+    // VRP
+
+    // ??
+
+
+
+
+    return result;
 }
 
 // translate and scale our desired view volume to fit into the OpenGL canonical view volume

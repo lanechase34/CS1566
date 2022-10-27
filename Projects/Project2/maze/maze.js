@@ -54,14 +54,17 @@ function createChamber(maze, fromCol, toCol, fromRow, toRow, debug = 'start') {
         fromRow + 2,
         toRow - 2
     ];
-    //console.log(`creating r pos from col ${bounds[0]},${bounds[1]} - row ${bounds[2]},${bounds[3]}`);
+
 
     // randomly pick EVEN,EVEN position in chamber
     // this guarantees we always select a wall junction
     let col = (Math.floor(Math.random() * (bounds[1] - bounds[0]) / 2) * 2) + bounds[0];
     let row = (Math.floor(Math.random() * (bounds[3] - bounds[2]) / 2) * 2) + bounds[2];
 
-    //console.log(`random position - ${col},${row}`);
+    if (debugMaze) {
+        console.log(`creating r pos from col ${bounds[0]},${bounds[1]} - row ${bounds[2]},${bounds[3]}`);
+        console.log(`random position - ${col},${row}`);
+    }
 
     // create wall from position
     // create column
@@ -280,7 +283,7 @@ function solveMaze(maze, curr, end, direction, solution) {
         case 4:
             if (maze[col][row - 1] == 1 && maze[col + 1][row] && maze[col][row + 1] == 1) deadEnd = true;
             break;
-        // random position
+        // random position (we don't know if we started in deadend so must check all directions)
         case 5:
             break;
     }
