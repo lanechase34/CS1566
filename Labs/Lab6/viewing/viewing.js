@@ -7,11 +7,6 @@
  * @param up up vector of camera for tilt
  * @returns 4x4 matrix
  */
-
-// let eye = [0, 1, 1, 1];
-// let at = [0, 0, 0, 1];
-// let up = [0, 1, 0, 1];
-
 function look_at(eye, at, up) {
     // VPN = eye - at
     let vpn = vectorSub(eye, at);
@@ -39,7 +34,7 @@ function look_at(eye, at, up) {
     result[3][3] = 1;
 
     result = matrixTranspose(result);
-    result[3][2] = d;
+    result[3][2] = -d;
 
     return result;
 }
