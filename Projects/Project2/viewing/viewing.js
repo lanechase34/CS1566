@@ -7,16 +7,39 @@
  * @param up up vector of camera for tilt
  * @returns 4x4 matrix
  */
+
+// let eye = [0, 1, 1, 1];
+// let at = [0, 0, 0, 1];
+// let up = [0, 1, 0, 1];
+
 function look_at(eye, at, up) {
-    // create matrix?
+    // VPN = eye - at
+    let vpn = vectorSub(eye, at);
+
+    // D is the magnitude of VPN
+    let d = vectorMagnitude(vpn);
+
+    // Normalize the VPN
+    let n = vectorNormalize(vpn);
+
+    // Calculate up vector
+    let vupN = crossProduct(up, n);
+
+    let u = vectorNormalize(vupN);
+
+    let nCrossu = crossProduct(n, u);
+
+    let v = vectorNormalize(nCrossu);
+
     let result = createMatrix(4, 4);
+    result[0] = u;
+    result[1] = v;
+    result[2] = n;
 
-    // calculat VPN
+    result[3][3] = 1;
 
-    // VRP
-
-    // ??
-
+    result = matrixTranspose(result);
+    result[3][2] = d;
 
 
 

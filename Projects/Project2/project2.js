@@ -125,6 +125,8 @@ let currDirection = 5;
 let currMoveDirection = 5;
 let isAnimating = false;
 
+let lookingAtMap = false;
+
 // key down call back
 function keyDownCallback(event) {
     switch (event.keyCode) {
@@ -177,9 +179,25 @@ function keyDownCallback(event) {
         // map view
         case 32:
             console.log('map view');
+            if (lookingAtMap) {
+                model_view = createIdentity();
+                projection = ortho(-1, 1, -1, 1, 1, -1);
+                display();
+                lookingAtMap = false;
+            } else {
+                // create look at for top of maze and zoom out?
+                // place eye above maze
+                let eye = [0, 5, 0, 1];
+                let at = [0, 0, 0, 1];
+                let up = [0, 0, 1, 1];
 
-            // create look at for top of maze and zoom out?
+                model_view = look_at(eye, at, up);
+                projection = ortho(-10, 10, -10, 10, 10, -10);
+                display();
+                lookingAtMap = true;
 
+            }
+            printMatrix(model_view);
             break;
     }
 }
