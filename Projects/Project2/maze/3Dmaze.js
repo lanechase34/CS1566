@@ -39,11 +39,8 @@ function generatePiece(positions, colors, color, pieceCtm, moveCtm) {
  * @returns 
  */
 function generate3DMaze(maze, positions, colors) {
-    // generate individual pieces
-    let mazeCol = (maze.length - 1) / 2;
-    let mazeRow = (maze[0].length - 1) / 2;
     // set each piece CTM
-    planeCtm = mmMult(translate((mazeCol - colsDim) / 2, 0, (mazeRow - rowsDim) / 2), scaling(mazeCol + 1.5, .1, mazeRow + 1.5));
+    planeCtm = mmMult(translate(0, 0, 0), scaling(colsDim + 1.5, .1, rowsDim + 1.5));
     pillarCtm = mmMult(translate(0, .55, 0), scaling(.2, 1, .2));
     wallCtm = mmMult(translate(0, .55, 0), scaling(.8, 1, .1));
 
@@ -60,7 +57,14 @@ function generate3DMaze(maze, positions, colors) {
 
             // if pillar wall
             if (col % 2 === 0 && row % 2 === 0) {
-                generatePiece(positions, colors, grey, pillarCtm, translate((col - colsDim) / 2, 0, (row - rowsDim) / 2));
+                if (col == colsDim && row == rowsDim) {
+                    generatePiece(positions, colors, white, pillarCtm, translate((col - colsDim) / 2, 0, (row - rowsDim) / 2));
+
+                }
+                else {
+                    generatePiece(positions, colors, grey, pillarCtm, translate((col - colsDim) / 2, 0, (row - rowsDim) / 2));
+
+                }
             }
             // not pillar wall
             else {
@@ -87,4 +91,9 @@ function generate3DMaze(maze, positions, colors) {
  */
 function animateSolve() {
 
+}
+
+function debug3D() {
+    generatePiece(positions, colors, yellow, pillarCtm, translate(eye[0], 0, eye[2]));
+    generatePiece(positions, colors, pink, pillarCtm, translate(at[0], 0, at[2]));
 }

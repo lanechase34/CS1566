@@ -63,21 +63,21 @@ function init(positions, colors) {
 
     // Current Transformation Matrix - locate and enable "ctm"
     ctm_location = gl.getUniformLocation(shaderProgram, "ctm");
-    if (ctm_location == -1) {
+    if (ctm_location == null) {
         alert("Unable to locate ctm");
         return -1;
     }
 
     // Model View Matrix - Locate and enable "model_view"
     model_view_location = gl.getUniformLocation(shaderProgram, "model_view");
-    if (model_view_location == -1) {
+    if (model_view_location == null) {
         alert("Unable to locate model view");
         return -1;
     }
 
     // Project Matrix - Locate and enable "projection"
     projection_location = gl.getUniformLocation(shaderProgram, "projection");
-    if (projection_location == -1) {
+    if (projection_location == null) {
         alert("Unable to locate projection");
         return -1;
     }
@@ -91,11 +91,20 @@ let positions = [];
 let colors = [];
 
 // current transformation matrix
-let ctms = [];
+let ctm = [];
 // model view matrix
 let model_view = [];
+
+// keep track of different views
+let model_map_view = [];
+let model_player_view = [];
+
 // projection matrix
 let projection = [];
+
+// keep track of different projections
+let projection_map = [];
+let projection_player = [];
 
 // store maze
 let maze;
@@ -104,6 +113,8 @@ let solution;
 // maze dimensions
 let colsDim = 8;
 let rowsDim = 8;
+
+// maze dimensions in openGL canvas
 
 // top left cell @ 1,1 
 // bottom right cell @ 15,15 (cols * 2 - 1),(rows * 2 - 1)
@@ -126,6 +137,9 @@ let currMoveDirection = 5;
 let isAnimating = false;
 
 let lookingAtMap = false;
+let eye, at, up;
+
+let debugY = 0;
 
 // key down call back
 function keyDownCallback(event) {
@@ -147,9 +161,6 @@ function keyDownCallback(event) {
             // start = [(Math.floor(Math.random() * (colsDim * 2) / 2) * 2) + 1, (Math.floor(Math.random() * (rowsDim * 2) / 2) * 2) + 1];
             // console.log(`trying solution from ${start} to ${end}`);
             // direction = 5;
-
-
-
             solution = createMatrix(maze.length, maze[0].length);
             solved = false;
             solutionLength = 0;
@@ -171,33 +182,43 @@ function keyDownCallback(event) {
         // move left
         case 65:
             console.log('moving left');
+            debugY -= 10;
+            ctm = rotateY(debugY);
+            display();
             break;
         // move right
         case 68:
             console.log('moving right');
+            debugY += 10;
+            ctm = rotateY(debugY);
+            display();
             break;
         // map view
         case 32:
-            console.log('map view');
+            // if already looking at map, go back to player view
             if (lookingAtMap) {
-                model_view = createIdentity();
-                projection = ortho(-1, 1, -1, 1, 1, -1);
+                model_view = model_player_view;
+                projection = projection_player;
                 display();
                 lookingAtMap = false;
             } else {
-                // create look at for top of maze and zoom out?
-                // place eye above maze
-                let eye = [0, 5, 0, 1];
-                let at = [0, 0, 0, 1];
-                let up = [0, 0, 1, 1];
+                // look at map
 
-                model_view = look_at(eye, at, up);
-                projection = ortho(-10, 10, -10, 10, 10, -10);
+                // place eye above maze
+                let scale = colsDim / 2 + 2;
+                let eye = [0, scale / 2, 0, 1];
+                // look at origin
+                let at = [0, 0, 0, 1];
+                let up = [0, 0, -1, 1];
+                // calculate look at and ortho projection
+                model_map_view = look_at(eye, at, up);
+                model_view = model_map_view;
+
+                projection_map = ortho(-scale, scale, -scale, scale, scale, -scale);
+                projection = projection_map;
                 display();
                 lookingAtMap = true;
-
             }
-            printMatrix(model_view);
             break;
     }
 }
@@ -231,6 +252,9 @@ let black = [0, 0, 0];
 let red = [255, 0, 0];
 let green = [0, 255, 0];
 let white = [255, 255, 255];
+let pink = [255, 192, 203];
+
+let yellow = [255, 255, 0];
 
 // main driver
 function main() {
@@ -238,39 +262,53 @@ function main() {
     if (initGL(canvas) == -1)
         return -1;
     document.onkeydown = keyDownCallback;
-    // to capture mouse events in canvas
-    canvas.onmousedown = mouseDownCallback;
-    canvas.onmouseup = mouseUpCallback;
-    canvas.onmousemove = mouseMoveCallback;
-    canvas.onwheel = mouseWheelCallback;
 
     maze = generateMaze({ cols: colsDim, rows: rowsDim });
     generate3DMaze(maze, positions, colors);
 
     // init ctms
-    ctms = createIdentity();
-    scalingCtm = createIdentity();
-    trackBallCtm = createIdentity();
+    ctm = createIdentity();
 
     // init model_view & projection matrix
     model_view = createIdentity();
     projection = createIdentity();
 
+
+
+
+    initPlayer();
+
     init(positions, colors);
     display();
 }
 
+function initPlayer() {
+    eye = [-5, 0, -3.5, 1];
+    at = [-4, 0, -3.5, 1];
+    up = [0, 1, 0, 0];
 
+    model_player_view = look_at(eye, at, up);
+    model_view = model_player_view;
+
+    projection_player = frustrum(-1, 1, 0, 1, -1, -10);
+    projection = projection_player;
+
+
+    printMatrix(model_view);
+    printMatrix(projection);
+
+    debug3D();
+
+}
 // Display the current positions array and apply our transformation matricess
 function display() {
-    ctms = mmMult(scalingCtm, trackBallCtm);
     // Clear
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     // Set the matrices
-    gl.uniformMatrix4fv(ctm_location, false, to1DF32Array(ctms));
     gl.uniformMatrix4fv(model_view_location, false, to1DF32Array(model_view));
     gl.uniformMatrix4fv(projection_location, false, to1DF32Array(projection));
+    gl.uniformMatrix4fv(ctm_location, false, to1DF32Array(ctm));
 
     // Draw our positions array
     gl.drawArrays(gl.TRIANGLES, 0, positions.length);

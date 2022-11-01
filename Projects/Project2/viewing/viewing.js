@@ -32,6 +32,21 @@ function look_at(eye, at, up) {
     let v = vectorNormalize(nCrossu);
 
     let result = createMatrix(4, 4);
+
+    // result[0][0] = u[0];
+    // result[1][0] = u[1];
+    // result[2][0] = u[2];
+
+    // result[0][1] = v[0];
+    // result[1][1] = v[1];
+    // result[2][1] = v[2];
+
+    // result[0][2] = n[0];
+    // result[1][2] = n[1];
+    // result[2][2] = n[2];
+
+    // result[3][3] = 1;
+    // result[3][2] = -d;
     result[0] = u;
     result[1] = v;
     result[2] = n;
@@ -39,7 +54,7 @@ function look_at(eye, at, up) {
     result[3][3] = 1;
 
     result = matrixTranspose(result);
-    result[3][2] = d;
+    result[3][2] = -d;
 
     return result;
 }
