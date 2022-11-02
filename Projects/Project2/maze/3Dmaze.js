@@ -64,7 +64,6 @@ function generate3DMaze(maze, positions, colors) {
                     generatePiece(positions, colors, grey, pillarCtm, translate((col - colsDim) / 2, 0, (row - rowsDim) / 2));
                 }
             }
-            // not pillar wall
             else {
                 // if current col,row is a wall
                 if (maze[col][row] === 1) {

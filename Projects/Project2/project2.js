@@ -266,7 +266,7 @@ function rotate(direction) {
     }
     else if (direction == "right") {
         playerDirection += 1;
-        if (playerDirection > 4) playerDirection = 0;
+        if (playerDirection > 4) playerDirection = 1;
     }
 }
 
@@ -281,17 +281,17 @@ function mapView() {
         display();
         lookingAtMap = false;
     } else {
-        // let scale = colsDim / 2 + 2;
-        // // place eye above maze and look at origin
-        // // calculate look at and ortho projection
-        // model_map_view = look_at([0, scale / 2, 0, 0], [0, 0, 0, 0], [0, 0, -1, 0]);
-        // model_view = model_map_view;
+        let scale = colsDim / 2 + 2;
+        // place eye above maze and look at origin
+        // calculate look at and ortho projection
+        model_map_view = look_at([0, scale / 2, 0, 0], [0, 0, 0, 0], [0, 0, -1, 0]);
+        model_view = model_map_view;
 
         projection_map = ortho(-scale, scale, -scale, scale, scale, -scale);
         projection = projection_map;
-        // display();
-        isAnimating = true;
-        animateMove(at, [0, colsDim / 2 + 2 / 2, 0, 0])
+        display();
+        // isAnimating = true;
+        // animateMove(at, [0, colsDim / 2 + 2 / 2, 0, 0])
         lookingAtMap = true;
     }
 }
@@ -315,7 +315,11 @@ function animate() {
         isAnimating = false;
     }
     else {
-        model_map_view = look_at()
+        // need final eye location
+        // need final ortho projection
+        // animatie  by slowly incrementing alpha until we reach magnitude?
+        model_map_view = look_at(scalarVectorMult(v * 1 / magnitude, end));
+        projection_map = ortho()
     }
 }
 
@@ -372,7 +376,7 @@ function initPlayer() {
     model_view = model_player_view;
 
     // define the player frustrum 
-    projection_player = frustrum(-.5, .5, -.4, .5, -1, -20);
+    projection_player = frustrum(-.4, .4, -.4, .4, -1, -20);
     projection = projection_player;
 }
 

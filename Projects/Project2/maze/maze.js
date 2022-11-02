@@ -78,7 +78,7 @@ function createChamber(maze, fromCol, toCol, fromRow, toRow, debug = 'start') {
     }
 
     // create three walls (n,e,s,w) and open a random hole on that wall
-    // choose wall not do include (n-1, e-2, w-3, s-4)
+    // choose wall to not include (n-1, e-2, w-3, s-4)
     let exclude = Math.floor(Math.random() * (4 - 0)) + 1;
 
     // create north opening
