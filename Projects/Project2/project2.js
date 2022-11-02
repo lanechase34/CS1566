@@ -268,7 +268,7 @@ function main() {
 
     eye = [-5, .1, -3.5, 0];
     at = [-4, 0, -3.5, 0];
-    debug3D()
+    //debug3D()
     init(positions, colors);
 
     initPlayer();
@@ -282,7 +282,7 @@ function initPlayer() {
 
     model_player_view = look_at(eye, at, up);
 
-    //model_player_view = mmMult(translate(3.5, 0, 0), model_player_view);
+    model_player_view = mmMult(translate(3.5, 0, 0), model_player_view);
     model_view = model_player_view;
 
     printMatrix(model_view);
