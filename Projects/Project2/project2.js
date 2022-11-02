@@ -128,18 +128,19 @@ let direction = 4;
 // exit of maze
 let end = [(colsDim * 2) - 1, (rowsDim * 2 - 1)];
 
-// current position of person in maze
-let currPosition = [];
+
+
 // current direction person is facing
-let currDirection = 5;
+// player starts facing east
+let playerDirection = 2;
 // direction person wants to move
 let currMoveDirection = 5;
-let isAnimating = false;
-
-let lookingAtMap = false;
+// current position of person in maze
 let eye, at, up;
+// for looking at map
+let lookingAtMap = false;
 
-let debugY = 0;
+let isAnimating = false;
 
 // key down call back
 function keyDownCallback(event) {
@@ -173,64 +174,149 @@ function keyDownCallback(event) {
             break;
         // move forward
         case 87:
-            console.log('moving forward');
+            moveForward(playerDirection);
             break;
         // move backward
         case 83:
-            console.log('moving backward');
+            moveBackward(playerDirection);
             break;
-        // move left
+        // look left
         case 65:
-            console.log('moving left');
-            debugY -= 10;
-            ctm = rotateY(debugY);
-            display();
+            console.log('looking left');
+            rotate("left");
             break;
-        // move right
+        // look right
         case 68:
-            console.log('moving right');
-            debugY += 10;
-            ctm = rotateY(debugY);
-            display();
+            console.log('looking right');
+            rotate("right");
             break;
         // map view
         case 32:
-            // if already looking at map, go back to player view
-            if (lookingAtMap) {
-                model_view = model_player_view;
-                projection = projection_player;
-                display();
-                lookingAtMap = false;
-            } else {
-                let scale = colsDim / 2 + 2;
-                // place eye above maze and look at origin
-                // calculate look at and ortho projection
-                model_map_view = look_at([0, scale / 2, 0, 0], [0, 0, 0, 0], [0, 0, -1, 0]);
-                model_view = model_map_view;
-
-                projection_map = ortho(-scale, scale, -scale, scale, scale, -scale);
-                projection = projection_map;
-                display();
-                lookingAtMap = true;
-            }
+            mapView();
             break;
     }
 }
 
 // function to move camera in direction?
-function move(direction) {
+// ** need animation from start - new eye **
+function moveForward(direction) {
+    // determine which direction we are facing and move that way
+    switch (direction) {
+        // north corresponds with -z axis, east corresponds with +x axis
+        // facing north
+        case 1:
+            // move in negative z direction
+            eye = [eye[0], eye[1], eye[2] - 1, 0];
+            at = [at[0], eye[1], at[2] - 1, 0];
+            break;
+        // facing east
+        case 2:
+            // move in positive x direction
+            eye = [eye[0] + 1, eye[1], eye[2], 0];
+            at = [at[0] + 1, eye[1], at[2], 0];
+            break;
+        // facing south
+        case 3:
+            // move in positive z direction
+            eye = [eye[0], eye[1], eye[2] + 1, 0];
+            at = [at[0], eye[1], at[2] + 1, 0];
+            break;
+        // facing west
+        case 4:
+            // move in negative x direction
+            eye = [eye[0] - 1, eye[1], eye[2], 0];
+            at = [at[0] - 1, eye[1], at[2], 0];
+            break;
+    }
+    up = [0, 1, 0, 0];
 
+    // define the new player location
+    model_player_view = look_at(eye, at, up);
+    model_view = model_player_view;
+
+    printVector(eye);
+    printVector(at);
+
+    display();
 }
+
+function moveBackward(direction) {
+    // determine inverse call to 'moveForward'
+    switch (direction) {
+        case 1:
+            moveForward(3);
+            break;
+        case 2:
+            moveForward(4);
+            break;
+        case 3:
+            moveForward(1);
+            break;
+        case 4:
+            moveForward(2);
+            break;
+    }
+}
+
+// function to rotate in direction
+function rotate(direction) {
+    if (direction == "left") {
+        playerDirection -= 1;
+        if (playerDirection < 1) playerDirection = 4;
+    }
+    else if (direction == "right") {
+        playerDirection += 1;
+        if (playerDirection > 4) playerDirection = 0;
+    }
+}
+
+
+
+// ** need to animate from player current position **
+function mapView() {
+    // if already looking at map, go back to player view
+    if (lookingAtMap) {
+        model_view = model_player_view;
+        projection = projection_player;
+        display();
+        lookingAtMap = false;
+    } else {
+        // let scale = colsDim / 2 + 2;
+        // // place eye above maze and look at origin
+        // // calculate look at and ortho projection
+        // model_map_view = look_at([0, scale / 2, 0, 0], [0, 0, 0, 0], [0, 0, -1, 0]);
+        // model_view = model_map_view;
+
+        projection_map = ortho(-scale, scale, -scale, scale, scale, -scale);
+        projection = projection_map;
+        // display();
+        isAnimating = true;
+        animateMove(at, [0, colsDim / 2 + 2 / 2, 0, 0])
+        lookingAtMap = true;
+    }
+}
+
 
 // function to animate camera move?
-function animateMove() {
+// need start & end position and iterate over this move in small amounts til reach end
 
+let magnitude = 500;
+let alpha = 0;
+let v;
+function animateMove(start, end) {
+    v = vectorSub(end - start);
+    isAnimating = true;
+    requestAnimationFrame(animate);
 }
 
-// functino to move camera for map view?
-// can animate this also?
-function mapView() {
-
+function animate() {
+    alpha += 1;
+    if (alpha > magnitude) {
+        isAnimating = false;
+    }
+    else {
+        model_map_view = look_at()
+    }
 }
 
 // verify we can move this direction
@@ -265,28 +351,28 @@ function main() {
     model_view = createIdentity();
     projection = createIdentity();
 
-
-    eye = [-5, .1, -3.5, 0];
-    at = [-4, 0, -3.5, 0];
-    //debug3D()
     init(positions, colors);
 
     initPlayer();
     display();
 }
 
+// Start the player outside the entrance of the maze
 function initPlayer() {
-    eye = [-5, .1, -3.5, 0];
-    at = [-2, 0, -3.5, 0];
+    // want player to start 1 cell outside maze
+    // at defines the cell the player is currently in
+    // eye is outside cell for frustrum to view entire cell
+
+    eye = [-((colsDim - 1) / 2) - 2, .5, -((rowsDim - 1) / 2), 0];
+    at = [-((colsDim - 1) / 2) - 1, .5, -((rowsDim - 1) / 2), 0];
     up = [0, 1, 0, 0];
 
+    // define the initial starting point of the player
     model_player_view = look_at(eye, at, up);
-
-    model_player_view = mmMult(translate(3.5, 0, 0), model_player_view);
     model_view = model_player_view;
 
-    printMatrix(model_view);
-    projection_player = frustrum(-.25, .25, -.1, .3, -1, -12);
+    // define the player frustrum 
+    projection_player = frustrum(-.5, .5, -.4, .5, -1, -20);
     projection = projection_player;
 }
 
@@ -305,6 +391,6 @@ function display() {
 }
 
 function debug() {
-    console.log(`positions length - ${positions.length}`);
-    console.log(`colors length - ${colors.length}`);
+    console.log(`positions length - ${positions.length} `);
+    console.log(`colors length - ${colors.length} `);
 }

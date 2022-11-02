@@ -58,12 +58,10 @@ function generate3DMaze(maze, positions, colors) {
             // if pillar wall
             if (col % 2 === 0 && row % 2 === 0) {
                 if (col == colsDim && row == rowsDim) {
-                    generatePiece(positions, colors, white, pillarCtm, translate((col - colsDim) / 2, 0, (row - rowsDim) / 2));
-
+                    generatePiece(positions, colors, white, mmMult(scaling(1, 2, 1), pillarCtm), translate((col - colsDim) / 2, 0, (row - rowsDim) / 2));
                 }
                 else {
                     generatePiece(positions, colors, grey, pillarCtm, translate((col - colsDim) / 2, 0, (row - rowsDim) / 2));
-
                 }
             }
             // not pillar wall
@@ -73,36 +71,17 @@ function generate3DMaze(maze, positions, colors) {
                     // determine if vertical or horizontal wall
                     // even column means vertical wall
                     if (col % 2 === 0) {
-                        if (col === 0) {
-                            generatePiece(positions, colors, purple, wallCtm, mmMult(translate((col - colsDim) / 2, 0, (row - rowsDim) / 2), rotateY(90)));
-
-                        } else {
-                            generatePiece(positions, colors, red, wallCtm, mmMult(translate((col - colsDim) / 2, 0, (row - rowsDim) / 2), rotateY(90)));
-
-                        }
+                        generatePiece(positions, colors, red, wallCtm, mmMult(translate((col - colsDim) / 2, 0, (row - rowsDim) / 2), rotateY(90)));
                     }
                     // else horizontal wall
                     else {
-                        if (row === 8) {
-                            generatePiece(positions, colors, purple, wallCtm, mmMult(translate((col - colsDim) / 2, 0, (row - rowsDim) / 2), rotateY(0)));
-
-                        } else {
-                            generatePiece(positions, colors, green, wallCtm, mmMult(translate((col - colsDim) / 2, 0, (row - rowsDim) / 2), rotateY(0)));
-
-                        }
+                        generatePiece(positions, colors, green, wallCtm, mmMult(translate((col - colsDim) / 2, 0, (row - rowsDim) / 2), rotateY(0)));
                     }
                 }
             }
         }
     }
     return;
-}
-
-/**
- * Animate over the solution matrix and 3D solve the maze by using animations
- */
-function animateSolve() {
-
 }
 
 function debug3D() {

@@ -8,7 +8,7 @@
  * @returns 4x4 matrix
  */
 function look_at(eye, at, up) {
-    let result = createMatrix(4, 4);
+    let rotateM = createMatrix(4, 4);
 
     // Calculate VPN
     let n = vectorNormalize(vectorSub(eye, at));
@@ -16,18 +16,19 @@ function look_at(eye, at, up) {
     let u = vectorNormalize(crossProduct(up, n));
     // Calculate new up vector
     let v = vectorNormalize(crossProduct(n, u));
-    // VRP is the eye
-    let d = vectorMagnitude(eye);
 
-    result[0] = u;
-    result[1] = v;
-    result[2] = n;
-    result[3][3] = 1;
+    rotateM[0] = u;
+    rotateM[1] = v;
+    rotateM[2] = n;
+    rotateM[3][3] = 1;
 
-    result = matrixTranspose(result);
+    rotateM = matrixTranspose(rotateM);
 
-    result[3][2] = -d;
+    // translate so origin is centered at eye
+    let translateM = translate(-eye[0], -eye[1], -eye[2]);
 
+    // translate first, then rotate
+    result = mmMult(rotateM, translateM);
     return result;
 }
 
