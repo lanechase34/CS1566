@@ -7,56 +7,45 @@
  * @param up up vector of camera for tilt
  * @returns 4x4 matrix
  */
-
-// let eye = [0, 1, 1, 1];
-// let at = [0, 0, 0, 1];
-// let up = [0, 1, 0, 1];
-
 function look_at(eye, at, up) {
-    // VPN = eye - at
-    let vpn = vectorSub(eye, at);
-
-    // D is the magnitude of VPN
-    let d = vectorMagnitude(vpn);
-
-    // Normalize the VPN
-    let n = vectorNormalize(vpn);
-
-    // Calculate up vector
-    let vupN = crossProduct(up, n);
-
-    let u = vectorNormalize(vupN);
-
-    let nCrossu = crossProduct(n, u);
-
-    let v = vectorNormalize(nCrossu);
-
     let result = createMatrix(4, 4);
 
-    // result[0][0] = u[0];
-    // result[1][0] = u[1];
-    // result[2][0] = u[2];
+    // Calculate VPN
+    let n = vectorNormalize(vectorSub(eye, at));
+    // Calculate right vector
+    let u = vectorNormalize(crossProduct(up, n));
+    // Calculate new up vector
+    let v = vectorNormalize(crossProduct(n, u));
+    // VRP is the eye
+    let d = vectorMagnitude(eye);
 
-    // result[0][1] = v[0];
-    // result[1][1] = v[1];
-    // result[2][1] = v[2];
-
-    // result[0][2] = n[0];
-    // result[1][2] = n[1];
-    // result[2][2] = n[2];
-
-    // result[3][3] = 1;
-    // result[3][2] = -d;
     result[0] = u;
     result[1] = v;
     result[2] = n;
-
     result[3][3] = 1;
 
     result = matrixTranspose(result);
+
     result[3][2] = -d;
 
     return result;
+}
+
+function debugLookAt() {
+    let eye = [0, 1, 1, 0];
+    let at = [0, 0, 0, 0];
+    let up = [0, 1, 0, 0];
+    printMatrix(look_at(eye, at, up));
+
+    eye = [0, 0, 0, 0];
+    at = [0, 0, -1, 0];
+    up = [0, 1, 0, 0];
+    printMatrix(look_at(eye, at, up));
+
+    eye = [0, 0, 0, 0];
+    at = [0, 0, -1000, 0];
+    up = [0, 1, 0, 0];
+    printMatrix(look_at(eye, at, up));
 }
 
 // translate and scale our desired view volume to fit into the OpenGL canonical view volume

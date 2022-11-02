@@ -202,16 +202,10 @@ function keyDownCallback(event) {
                 display();
                 lookingAtMap = false;
             } else {
-                // look at map
-
-                // place eye above maze
                 let scale = colsDim / 2 + 2;
-                let eye = [0, scale / 2, 0, 1];
-                // look at origin
-                let at = [0, 0, 0, 1];
-                let up = [0, 0, -1, 1];
+                // place eye above maze and look at origin
                 // calculate look at and ortho projection
-                model_map_view = look_at(eye, at, up);
+                model_map_view = look_at([0, scale / 2, 0, 0], [0, 0, 0, 0], [0, 0, -1, 0]);
                 model_view = model_map_view;
 
                 projection_map = ortho(-scale, scale, -scale, scale, scale, -scale);
@@ -253,8 +247,8 @@ let red = [255, 0, 0];
 let green = [0, 255, 0];
 let white = [255, 255, 255];
 let pink = [255, 192, 203];
-
 let yellow = [255, 255, 0];
+let purple = [191, 64, 191];
 
 // main driver
 function main() {
@@ -266,40 +260,36 @@ function main() {
     maze = generateMaze({ cols: colsDim, rows: rowsDim });
     generate3DMaze(maze, positions, colors);
 
-    // init ctms
+    // init ctm, model_view & projection matrix
     ctm = createIdentity();
-
-    // init model_view & projection matrix
     model_view = createIdentity();
     projection = createIdentity();
 
 
-
+    eye = [-5, .1, -3.5, 0];
+    at = [-4, 0, -3.5, 0];
+    debug3D()
+    init(positions, colors);
 
     initPlayer();
-
-    init(positions, colors);
     display();
 }
 
 function initPlayer() {
-    eye = [-5, 0, -3.5, 1];
-    at = [-4, 0, -3.5, 1];
+    eye = [-5, .1, -3.5, 0];
+    at = [-2, 0, -3.5, 0];
     up = [0, 1, 0, 0];
 
     model_player_view = look_at(eye, at, up);
+
+    //model_player_view = mmMult(translate(3.5, 0, 0), model_player_view);
     model_view = model_player_view;
 
-    projection_player = frustrum(-1, 1, 0, 1, -1, -10);
-    projection = projection_player;
-
-
     printMatrix(model_view);
-    printMatrix(projection);
-
-    debug3D();
-
+    projection_player = frustrum(-.25, .25, -.1, .3, -1, -12);
+    projection = projection_player;
 }
+
 // Display the current positions array and apply our transformation matricess
 function display() {
     // Clear

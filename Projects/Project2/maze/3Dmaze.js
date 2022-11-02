@@ -40,7 +40,7 @@ function generatePiece(positions, colors, color, pieceCtm, moveCtm) {
  */
 function generate3DMaze(maze, positions, colors) {
     // set each piece CTM
-    planeCtm = mmMult(translate(0, 0, 0), scaling(colsDim + 1.5, .1, rowsDim + 1.5));
+    planeCtm = mmMult(translate(0, .05, 0), scaling(colsDim + 1.5, .1, rowsDim + 1.5));
     pillarCtm = mmMult(translate(0, .55, 0), scaling(.2, 1, .2));
     wallCtm = mmMult(translate(0, .55, 0), scaling(.8, 1, .1));
 
@@ -73,11 +73,23 @@ function generate3DMaze(maze, positions, colors) {
                     // determine if vertical or horizontal wall
                     // even column means vertical wall
                     if (col % 2 === 0) {
-                        generatePiece(positions, colors, red, wallCtm, mmMult(translate((col - colsDim) / 2, 0, (row - rowsDim) / 2), rotateY(90)));
+                        if (col === 0) {
+                            generatePiece(positions, colors, purple, wallCtm, mmMult(translate((col - colsDim) / 2, 0, (row - rowsDim) / 2), rotateY(90)));
+
+                        } else {
+                            generatePiece(positions, colors, red, wallCtm, mmMult(translate((col - colsDim) / 2, 0, (row - rowsDim) / 2), rotateY(90)));
+
+                        }
                     }
                     // else horizontal wall
                     else {
-                        generatePiece(positions, colors, green, wallCtm, mmMult(translate((col - colsDim) / 2, 0, (row - rowsDim) / 2), rotateY(0)));
+                        if (row === 8) {
+                            generatePiece(positions, colors, purple, wallCtm, mmMult(translate((col - colsDim) / 2, 0, (row - rowsDim) / 2), rotateY(0)));
+
+                        } else {
+                            generatePiece(positions, colors, green, wallCtm, mmMult(translate((col - colsDim) / 2, 0, (row - rowsDim) / 2), rotateY(0)));
+
+                        }
                     }
                 }
             }
@@ -94,6 +106,6 @@ function animateSolve() {
 }
 
 function debug3D() {
-    generatePiece(positions, colors, yellow, pillarCtm, translate(eye[0], 0, eye[2]));
-    generatePiece(positions, colors, pink, pillarCtm, translate(at[0], 0, at[2]));
+    generatePiece(positions, colors, pink, pillarCtm, translate(eye[0], 0, eye[2]));
+    generatePiece(positions, colors, yellow, pillarCtm, translate(at[0], 0, at[2]));
 }
