@@ -57,7 +57,20 @@ function generate3DMaze(maze, positions, colors) {
 
             // if pillar wall
             if (col % 2 === 0 && row % 2 === 0) {
-                generatePiece(positions, colors, grey, pillarCtm, translate((col - colsDim) / 2, 0, (row - rowsDim) / 2));
+                let currColor = grey;
+                if (col === 0 && row === 0) {
+                    currColor = gold;
+                }
+                if (col === 0 && row === 2) {
+                    currColor = gold;
+                }
+                if (col === maze.length - 1 && row === maze.length - 1 - 2) {
+                    currColor = gold;
+                }
+                if (col === maze.length - 1 && row === maze.length - 1) {
+                    currColor = gold;
+                }
+                generatePiece(positions, colors, currColor, pillarCtm, translate((col - colsDim) / 2, 0, (row - rowsDim) / 2));
 
             }
             else {

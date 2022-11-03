@@ -630,6 +630,7 @@ let white = [255, 255, 255];
 let pink = [255, 192, 203];
 let yellow = [255, 255, 0];
 let purple = [191, 64, 191];
+let gold = [255, 215, 0];
 
 // main driver
 function main() {
