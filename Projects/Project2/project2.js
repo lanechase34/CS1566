@@ -153,6 +153,7 @@ function keyDownCallback(event) {
             colors = [];
             generate3DMaze(maze, positions, colors);
             init(positions, colors);
+            initPlayer();
             display();
             break;
         // solve maze
@@ -301,16 +302,25 @@ function animateSolveMaze() {
     // convert current player position openGL coordinates to maze coordinates
     let curr = [((at[0] * 2) + colsDim), ((at[2] * 2) + rowsDim)];
     let currDirection = 5;
-    console.log(curr);
 
-    console.log(playerDirection);
+    // if at the entrance of maze, move into the first cell
+    if (curr[0] == -1 && curr[1] == 1) {
+        console.log('entering maze');
+        moveForward(playerDirection);
+        curr = [((at[0] * 2) + colsDim), ((at[2] * 2) + rowsDim)];
+    }
     // solve the maze
     solveMaze(maze, curr, end, direction, solution);
     printMaze(maze, true, solution);
 
     solutionLength -= 2;
     // now with solution matrix, animate the steps
-    while (curr[0] != end[0] || curr[1] != end[1]) {
+    //while (curr[0] != end[0] || curr[1] != end[1]) {
+    if (curr[0] != end[0] || curr[1] != end[1]) {
+
+
+
+
         // let's look at current position and see where to head
 
         // remember, only [odd, odd] in the matrix are cells so only check those locations to see where to go next
@@ -360,28 +370,53 @@ function animateSolveMaze() {
 
         // lets align our current rotation to the direction we need
         // adjust playerDirection to the currDirection
-        //console.log(`player direction - ${playerDirection}, currDirection - ${currDirection}`);
+        console.log(`player direction - ${playerDirection}, currDirection - ${currDirection}`);
 
         // how to rotate once animation is done??
 
+        // apply rotations until right direction??
+        let i = 0;
+        while (playerDirection != currDirection && i < 1000) {
+            console.log(isAnimating);
+            if (!isAnimating) {
+                console.log('rotating right');
+                rotate("right");
+            }
+            i++;
+        }
+
+        if (playerDirection == currDirection) {
+            moveForward(playerDirection);
+            curr = nextMove;
+            solutionLength--;
+        }
 
 
-        //console.log(isAnimating);
+    } else {
+        if (playerDirection != 2) {
+            rotate("right");
+        } else {
+            moveForward(playerDirection);
+        }
 
-
-        // // now lets move
-        // console.log(`moving forward in direction - ${directions[playerDirection - 1]}`);
-        // let completedMove = false;
-        // while (!completedMove) {
-        //     if (!isAnimating) {
-        //         moveForward(playerDirection);
-        //         completedMove = true;
-        //         console.log('move completed');
-        //     }
-        // }
-        curr = nextMove;
-        solutionLength--;
     }
+
+
+    //console.log(isAnimating);
+
+
+    // // now lets move
+    // console.log(`moving forward in direction - ${directions[playerDirection - 1]}`);
+    // let completedMove = false;
+    // while (!completedMove) {
+    //     if (!isAnimating) {
+    //         moveForward(playerDirection);
+    //         completedMove = true;
+    //         console.log('move completed');
+    //     }
+    // }
+
+    //}
 }
 let counter = 0;
 let alpha = 15;
@@ -449,15 +484,16 @@ function animateFrameRotate() {
     }
 }
 
+let alphaMap = 50;
 // animates from currPosition - topOfMap
 function animateFrameMap() {
     counter += 1;
-    if (counter > alpha) {
+    if (counter > alphaMap) {
         isAnimating = false;
     }
     if (isAnimating) {
         // create look at view for current position along vector
-        let QPrime = vectorAdd(startP, scalarVectorMult(counter / alpha, v));
+        let QPrime = vectorAdd(startP, scalarVectorMult(counter / alphaMap, v));
         // we want to always look at y = 0 for this view
         model_map_view = look_at(QPrime, [QPrime[0], 0, QPrime[2], 1], [0, 0, -1, 0]);
         model_view = model_map_view;
@@ -517,8 +553,8 @@ function initPlayer() {
     // at defines the cell the player is currently in
     // eye is outside cell for frustrum to view entire cell
 
-    eye = [-((colsDim - 1) / 2) - 2, .5, -((rowsDim - 1) / 2), 1];
-    at = [-((colsDim - 1) / 2) - 1, .5, -((rowsDim - 1) / 2), 1];
+    eye = [-((colsDim - 1) / 2) - 2, .6, -((rowsDim - 1) / 2), 1];
+    at = [-((colsDim - 1) / 2) - 1, .6, -((rowsDim - 1) / 2), 1];
     up = [0, 1, 0, 0];
 
     // define the initial starting point of the player
@@ -526,7 +562,7 @@ function initPlayer() {
     model_view = model_player_view;
 
     // define the player frustrum 
-    projection_player = frustrum(-.5, .5, -.4, .4, -1, -20);
+    projection_player = frustrum(-.4, .4, -.4, .4, -1, -20);
     projection = projection_player;
 }
 
