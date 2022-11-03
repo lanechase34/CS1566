@@ -176,7 +176,57 @@ function keyDownCallback(event) {
         case 32:
             mapView();
             break;
+
+        // to modify frustrum
+        // leftArrow
+        case 37:
+            // expand L/R
+            leftF -= frustrumModifier;
+            rightF += frustrumModifier;
+            updateFrustrum();
+            break;
+        // rightArrow
+        case 39:
+            // shrink L/R
+            leftF += frustrumModifier;
+            rightF -= frustrumModifier;
+            updateFrustrum();
+            break;
+        // upArrow
+        case 38:
+            // expand T/B
+            topF += frustrumModifier;
+            bottomF -= frustrumModifier;
+            updateFrustrum();
+            break;
+        // downArrow
+        case 40:
+            // shrink T/B
+            topF -= frustrumModifier;
+            bottomF += frustrumModifier;
+            updateFrustrum();
+            break;
+        // home
+        case 36:
+            //expand N/F
+            nearF += frustrumModifier;
+            farF += frustrumModifier;
+            updateFrustrum();
+            break;
+        // end
+        case 35:
+            // shrink N/F
+            nearF -= frustrumModifier;
+            farF -= frustrumModifier;
+            updateFrustrum();
+            break;
     }
+}
+
+function updateFrustrum() {
+    projection_player = frustrum(leftF, rightF, bottomF, topF, nearF, farF);
+    projection = projection_player;
+    display();
 }
 
 // function to create the world, initialize the player, and initialize variables
@@ -642,6 +692,9 @@ function main() {
     createWorld();
 }
 
+let leftF, rightF, bottomF, topF, nearF, farF;
+let frustrumModifier = .01;
+
 // Start the player outside the entrance of the maze
 function initPlayer() {
     // want player to start 1 cell outside maze
@@ -651,6 +704,7 @@ function initPlayer() {
     // player starts facing east at entrance of the maze
     playerDirection = 2;
 
+    // move eye to top left of maze in openGL coordinate
     eye = [-((colsDim - 1) / 2) - 2, .5, -((rowsDim - 1) / 2), 1];
     at = [-((colsDim - 1) / 2) - 1, .5, -((rowsDim - 1) / 2), 1];
     up = [0, 1, 0, 0];
@@ -660,7 +714,14 @@ function initPlayer() {
     model_view = model_player_view;
 
     // define the player frustrum 
-    projection_player = frustrum(-.4, .4, -.4, .4, -1, -50);
+    leftF = -.4;
+    rightF = .4;
+    bottomF = -.4;
+    topF = .4;
+    nearF = -1;
+    farF = -50;
+
+    projection_player = frustrum(leftF, rightF, bottomF, topF, nearF, farF);
     projection = projection_player;
 }
 
@@ -681,4 +742,9 @@ function display() {
 function debug() {
     console.log(`positions length - ${positions.length} `);
     console.log(`colors length - ${colors.length} `);
+}
+
+// print frustrum values to console
+function debugFrustrum() {
+    console.log(`left-${leftF}, right-${rightF}, top-${topF}, bottom-${bottomF}, near-${nearF}, far-${farF}`);
 }
