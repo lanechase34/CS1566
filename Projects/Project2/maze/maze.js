@@ -173,7 +173,7 @@ function printMaze(maze, printSolution = false, solution = null) {
                 }
                 else {
                     if (printSolution) {
-                        if (solution[c][r] === 1) {
+                        if (solution[c][r] >= 1) {
                             curr += ' x ';
                         }
                         else {
@@ -243,7 +243,7 @@ let debugMaze = false;
  */
 let solved = false;
 // track solution step length
-let solutionLength = 0;
+let solutionLength = 1;
 function solveMaze(maze, curr, end, direction, solution) {
     let col = curr[0];
     let row = curr[1];
@@ -258,7 +258,7 @@ function solveMaze(maze, curr, end, direction, solution) {
     if (col == end[0] && row == end[1]) {
         if (debugMaze) console.log('Solved Maze!');
         solved = true;
-        solution[col][row] = 1;
+        solution[col][row] = solutionLength;
         solutionLength++;
         return;
     }
@@ -332,7 +332,7 @@ function solveMaze(maze, curr, end, direction, solution) {
         }
     }
     if (solved) {
-        solution[col][row] = 1;
+        solution[col][row] = solutionLength;
         solutionLength++;
         return;
     }

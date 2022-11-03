@@ -157,20 +157,7 @@ function keyDownCallback(event) {
             break;
         // solve maze
         case 86:
-            // test random position solution
-            // to solve from random position, use direction = 5 and the current coords
-            // start = [(Math.floor(Math.random() * (colsDim * 2) / 2) * 2) + 1, (Math.floor(Math.random() * (rowsDim * 2) / 2) * 2) + 1];
-            // console.log(`trying solution from ${start} to ${end}`);
-            // direction = 5;
-            solution = createMatrix(maze.length, maze[0].length);
-            solved = false;
-            solutionLength = 0;
-            // solve the maze
-            solveMaze(maze, start, end, direction, solution);
-            printMaze(maze, true, solution);
-
-            // animate over solution array?
-            // animate()
+            animateSolveMaze();
             break;
         // move forward
         case 87:
@@ -200,44 +187,44 @@ function keyDownCallback(event) {
 // function to move camera in direction?
 // ** need animation from start - new eye **
 function moveForward(direction) {
-    // determine which direction we are facing and move that way
-    switch (direction) {
-        // north corresponds with -z axis, east corresponds with +x axis
-        // facing north
-        case 1:
-            // move in negative z direction
-            eye = [eye[0], eye[1], eye[2] - 1, 0];
-            at = [at[0], eye[1], at[2] - 1, 0];
-            break;
-        // facing east
-        case 2:
-            // move in positive x direction
-            eye = [eye[0] + 1, eye[1], eye[2], 0];
-            at = [at[0] + 1, eye[1], at[2], 0];
-            break;
-        // facing south
-        case 3:
-            // move in positive z direction
-            eye = [eye[0], eye[1], eye[2] + 1, 0];
-            at = [at[0], eye[1], at[2] + 1, 0];
-            break;
-        // facing west
-        case 4:
-            // move in negative x direction
-            eye = [eye[0] - 1, eye[1], eye[2], 0];
-            at = [at[0] - 1, eye[1], at[2], 0];
-            break;
+    if (!isAnimating) {
+        // determine which direction we are facing and move that way
+        let adjustX = 0;
+        let adjustZ = 0;
+        switch (direction) {
+
+            // north corresponds with -z axis, east corresponds with +x axis
+            // facing north
+            case 1:
+                // move in negative z direction
+                adjustX = 0;
+                adjustZ = -1;
+                break;
+            // facing east
+            case 2:
+                // move in positive x direction
+                adjustX = 1;
+                adjustZ = 0;
+                break;
+            // facing south
+            case 3:
+                // move in positive z direction
+                adjustX = 0;
+                adjustZ = 1;
+                break;
+            // facing west
+            case 4:
+                // move in negative x direction
+                adjustX = -1;
+                adjustZ = 0;
+                break;
+        }
+        let newEye = [eye[0] + adjustX, eye[1], eye[2] + adjustZ, 1];
+        isAnimating = true;
+        at = [at[0] + adjustX, eye[1], at[2] + adjustZ, 1];
+        animate(eye, newEye, "move");
+        eye = newEye;
     }
-    up = [0, 1, 0, 0];
-
-    // define the new player location
-    model_player_view = look_at(eye, at, up);
-    model_view = model_player_view;
-
-    printVector(eye);
-    printVector(at);
-
-    display();
 }
 
 function moveBackward(direction) {
@@ -260,66 +247,229 @@ function moveBackward(direction) {
 
 // function to rotate in direction
 function rotate(direction) {
-    if (direction == "left") {
-        playerDirection -= 1;
-        if (playerDirection < 1) playerDirection = 4;
-    }
-    else if (direction == "right") {
-        playerDirection += 1;
-        if (playerDirection > 4) playerDirection = 1;
+    if (!isAnimating) {
+        // determine direction player will be facing after rotate
+        let rotate;
+        if (direction == "left") {
+            playerDirection -= 1;
+            if (playerDirection < 1) playerDirection = 4;
+            rotate = 90;
+        }
+        else if (direction == "right") {
+            playerDirection += 1;
+            if (playerDirection > 4) playerDirection = 1;
+            rotate = -90;
+        }
+        // calculate new at by translating eye, at to origin, apply rotate, translate back
+        // request animation
+        let newEye = matrixVectorMult(mmMult(translate(at[0], at[1], at[2]), mmMult(rotateY(rotate), translate(-at[0], -at[1], -at[2]))), eye);
+        isAnimating = true;
+        // animate from current at point to newAt
+        animate(eye, newEye, "move");
+        eye = newEye;
     }
 }
 
-
-
-// ** need to animate from player current position **
+// View the map from top of world using look At origin
 function mapView() {
-    // if already looking at map, go back to player view
-    if (lookingAtMap) {
-        model_view = model_player_view;
-        projection = projection_player;
-        display();
-        lookingAtMap = false;
-    } else {
-        let scale = colsDim / 2 + 2;
-        // place eye above maze and look at origin
-        // calculate look at and ortho projection
-        model_map_view = look_at([0, scale / 2, 0, 0], [0, 0, 0, 0], [0, 0, -1, 0]);
-        model_view = model_map_view;
-
-        projection_map = ortho(-scale, scale, -scale, scale, scale, -scale);
-        projection = projection_map;
-        display();
-        // isAnimating = true;
-        // animateMove(at, [0, colsDim / 2 + 2 / 2, 0, 0])
-        lookingAtMap = true;
+    if (!isAnimating) {
+        // if already looking at map, go back to player view
+        if (lookingAtMap) {
+            model_view = model_player_view;
+            projection = projection_player;
+            display();
+            lookingAtMap = false;
+        } else {
+            // how high the final point should be above the map, scales with the size of maze
+            let scale = colsDim / 2 + 2;
+            isAnimating = true;
+            lookingAtMap = true;
+            // animate from player position to top of map
+            animate([eye[0], 0, eye[2], 1], [0, scale, 0, 1], "map");
+        }
     }
 }
 
 
-// function to animate camera move?
-// need start & end position and iterate over this move in small amounts til reach end
+function animateSolveMaze() {
+    // create the solution matrix
+    solution = createMatrix(maze.length, maze[0].length);
+    solved = false;
+    solutionLength = 1;
+    direction = 5;
 
-let magnitude = 500;
-let alpha = 0;
+    // convert current player position openGL coordinates to maze coordinates
+    let curr = [((at[0] * 2) + colsDim), ((at[2] * 2) + rowsDim)];
+    let currDirection = 5;
+    console.log(curr);
+
+    console.log(playerDirection);
+    // solve the maze
+    solveMaze(maze, curr, end, direction, solution);
+    printMaze(maze, true, solution);
+
+    solutionLength -= 2;
+    // now with solution matrix, animate the steps
+    while (curr[0] != end[0] || curr[1] != end[1]) {
+        // let's look at current position and see where to head
+
+        // remember, only [odd, odd] in the matrix are cells so only check those locations to see where to go next
+
+        // look at adjacent [odd, odd] cells to find next move
+
+        // column defined curr[0] - col, curr[1] - row, solution[curr[0]][curr[1]] - curr cell
+        let foundMove = false;
+        let nextMove;
+        // look north 
+        if (currDirection != 3 && !foundMove && curr[1] - 2 > 0) {
+            if (solution[curr[0]][curr[1] - 2] == solutionLength) {
+                foundMove = true;
+                nextMove = [curr[0], curr[1] - 2];
+                currDirection = 1;
+            }
+        }
+        // look east
+        if (currDirection != 4 && !foundMove && curr[0] + 2 < solution.length) {
+            if (solution[curr[0] + 2][curr[1]] == solutionLength) {
+                foundMove = true;
+                nextMove = [curr[0] + 2, curr[1]];
+                currDirection = 2;
+            }
+        }
+        // look south
+        if (currDirection != 1 && !foundMove && curr[1] + 2 < solution[0].length) {
+            if (solution[curr[0]][curr[1] + 2] == solutionLength) {
+                foundMove = true;
+                nextMove = [curr[0], curr[1] + 2];
+                currDirection = 3;
+            }
+        }
+        // look west
+        if (currDirection != 2 && !foundMove && curr[0] - 2 > 0) {
+            if (solution[curr[0] - 2][curr[1]] == solutionLength) {
+                foundMove = true;
+                nextMove = [curr[0] - 2, curr[1]];
+                currDirection = 4;
+            }
+        }
+
+        console.log(`${nextMove} - move in direction ${directions[currDirection - 1]}`);
+
+
+        // now we have the direction we need to move and the next move
+
+        // lets align our current rotation to the direction we need
+        // adjust playerDirection to the currDirection
+        //console.log(`player direction - ${playerDirection}, currDirection - ${currDirection}`);
+
+        // how to rotate once animation is done??
+
+
+
+        //console.log(isAnimating);
+
+
+        // // now lets move
+        // console.log(`moving forward in direction - ${directions[playerDirection - 1]}`);
+        // let completedMove = false;
+        // while (!completedMove) {
+        //     if (!isAnimating) {
+        //         moveForward(playerDirection);
+        //         completedMove = true;
+        //         console.log('move completed');
+        //     }
+        // }
+        curr = nextMove;
+        solutionLength--;
+    }
+}
+let counter = 0;
+let alpha = 15;
 let v;
-function animateMove(start, end) {
-    v = vectorSub(end - start);
-    isAnimating = true;
-    requestAnimationFrame(animate);
+let startP;
+/**
+ * Animate the move from end to start
+ * @param start - starting point
+ * @param end - ending point
+ */
+function animate(start, end, type) {
+    // reset counter
+    counter = 0;
+    // our starting point, P
+    startP = start;
+    // the vector between ending point and starting point
+    v = vectorSub(end, start);
+
+    if (type == "rotate") {
+        requestAnimationFrame(animateFrameRotate);
+    }
+    else if (type == "map") {
+        requestAnimationFrame(animateFrameMap);
+    }
+    else if (type == "move") {
+        requestAnimationFrame(animateFrameMove);
+    }
 }
 
-function animate() {
-    alpha += 1;
-    if (alpha > magnitude) {
+// animates from startEye - newEye
+function animateFrameMove() {
+    counter += 1;
+    if (counter > alpha) {
         isAnimating = false;
     }
-    else {
-        // need final eye location
-        // need final ortho projection
-        // animatie  by slowly incrementing alpha until we reach magnitude?
-        model_map_view = look_at(scalarVectorMult(v * 1 / magnitude, end));
-        projection_map = ortho()
+    if (isAnimating) {
+        // create look at moving eye along vector
+        let QPrime = vectorAdd(startP, scalarVectorMult(counter / alpha, v));
+
+        // create new look at
+        model_player_view = look_at(QPrime, at, up);
+        model_view = model_player_view;
+
+        display();
+        requestAnimationFrame(animateFrameMove);
+    }
+}
+
+// animates from startAt - newAt
+function animateFrameRotate() {
+    counter += 1;
+    if (counter > alpha) {
+        isAnimating = false;
+    }
+    if (isAnimating) {
+        // create look at view for current position along vector
+        let QPrime = vectorAdd(startP, scalarVectorMult(counter / alpha, v));
+
+        // create new look at
+        model_player_view = look_at(eye, QPrime, up);
+        model_view = model_player_view;
+
+        display();
+        requestAnimationFrame(animateFrameRotate);
+    }
+}
+
+// animates from currPosition - topOfMap
+function animateFrameMap() {
+    counter += 1;
+    if (counter > alpha) {
+        isAnimating = false;
+    }
+    if (isAnimating) {
+        // create look at view for current position along vector
+        let QPrime = vectorAdd(startP, scalarVectorMult(counter / alpha, v));
+        // we want to always look at y = 0 for this view
+        model_map_view = look_at(QPrime, [QPrime[0], 0, QPrime[2], 1], [0, 0, -1, 0]);
+        model_view = model_map_view;
+
+        // the ortho projection is determined by the height of the vector, y
+        // the farther away from the origin, the more map we want to see, so at the top, we see all the map
+        let scale = QPrime[1];
+        projection_map = ortho(-scale, scale, -scale, scale, scale, -scale);
+        projection = projection_map;
+
+        display();
+        requestAnimationFrame(animateFrameMap);
     }
 }
 
@@ -367,8 +517,8 @@ function initPlayer() {
     // at defines the cell the player is currently in
     // eye is outside cell for frustrum to view entire cell
 
-    eye = [-((colsDim - 1) / 2) - 2, .5, -((rowsDim - 1) / 2), 0];
-    at = [-((colsDim - 1) / 2) - 1, .5, -((rowsDim - 1) / 2), 0];
+    eye = [-((colsDim - 1) / 2) - 2, .5, -((rowsDim - 1) / 2), 1];
+    at = [-((colsDim - 1) / 2) - 1, .5, -((rowsDim - 1) / 2), 1];
     up = [0, 1, 0, 0];
 
     // define the initial starting point of the player
@@ -376,7 +526,7 @@ function initPlayer() {
     model_view = model_player_view;
 
     // define the player frustrum 
-    projection_player = frustrum(-.4, .4, -.4, .4, -1, -20);
+    projection_player = frustrum(-.5, .5, -.4, .4, -1, -20);
     projection = projection_player;
 }
 
