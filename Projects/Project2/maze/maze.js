@@ -6,8 +6,6 @@
  * @returns 
  */
 function generateMaze(args) {
-    console.log('Generating Maze');
-
     // create empty maze (outside walls only)
     let maze = generateEmptyMaze(args.cols, args.rows);
 

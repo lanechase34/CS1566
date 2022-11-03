@@ -57,12 +57,8 @@ function generate3DMaze(maze, positions, colors) {
 
             // if pillar wall
             if (col % 2 === 0 && row % 2 === 0) {
-                if (col == colsDim && row == rowsDim) {
-                    generatePiece(positions, colors, white, mmMult(scaling(1, 2, 1), pillarCtm), translate((col - colsDim) / 2, 0, (row - rowsDim) / 2));
-                }
-                else {
-                    generatePiece(positions, colors, grey, pillarCtm, translate((col - colsDim) / 2, 0, (row - rowsDim) / 2));
-                }
+                generatePiece(positions, colors, grey, pillarCtm, translate((col - colsDim) / 2, 0, (row - rowsDim) / 2));
+
             }
             else {
                 // if current col,row is a wall
@@ -81,9 +77,4 @@ function generate3DMaze(maze, positions, colors) {
         }
     }
     return;
-}
-
-function debug3D() {
-    generatePiece(positions, colors, pink, pillarCtm, translate(eye[0], 0, eye[2]));
-    generatePiece(positions, colors, yellow, pillarCtm, translate(at[0], 0, at[2]));
 }

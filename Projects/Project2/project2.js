@@ -121,40 +121,36 @@ let rowsDim = 8;
 // 8x8 maze represented as 17x17 array
 // indices 0-16, so 15,15 is the last cell in bottom right
 
-// start of maze
+// start of maze (top-left)
 let start = [1, 1];
 // what direction you enter maze from
 let direction = 4;
-// exit of maze
+// exit of maze (bottom - right)
 let end = [(colsDim * 2) - 1, (rowsDim * 2 - 1)];
 
-
-
-// current direction person is facing
-// player starts facing east
-let playerDirection = 2;
+// current direction player is facing
+let playerDirection;
 // direction person wants to move
 let currMoveDirection = 5;
-// current position of person in maze
+// current position of person in maze (at denotes current cell)
 let eye, at, up;
 // for looking at map
 let lookingAtMap = false;
-
+// for animation
 let isAnimating = false;
+
+// for animated solve
+let isSolving = false;
+// the moves to reach exit
+let solveMoves = [];
+let currMove = 0;
 
 // key down call back
 function keyDownCallback(event) {
     switch (event.keyCode) {
         // generate maze
         case 71:
-            // generate maze and 3D maze and send to graphics
-            maze = generateMaze({ cols: colsDim, rows: rowsDim });
-            positions = [];
-            colors = [];
-            generate3DMaze(maze, positions, colors);
-            init(positions, colors);
-            initPlayer();
-            display();
+            createWorld();
             break;
         // solve maze
         case 86:
@@ -170,18 +166,35 @@ function keyDownCallback(event) {
             break;
         // look left
         case 65:
-            console.log('looking left');
             rotate("left");
             break;
         // look right
         case 68:
-            console.log('looking right');
             rotate("right");
             break;
         // map view
         case 32:
             mapView();
             break;
+    }
+}
+
+// function to create the world, initialize the player, and initialize variables
+function createWorld() {
+    if (!isAnimating) {
+        // generate maze and 3D maze and send to graphics
+        maze = generateMaze({ cols: colsDim, rows: rowsDim });
+        positions = [];
+        colors = [];
+        generate3DMaze(maze, positions, colors);
+        // init ctm, model_view & projection matrix
+        ctm = createIdentity();
+        model_view = createIdentity();
+        projection = createIdentity();
+
+        init(positions, colors);
+        initPlayer();
+        display();
     }
 }
 
@@ -228,6 +241,7 @@ function moveForward(direction) {
     }
 }
 
+// moveBackward -> inverse of forward
 function moveBackward(direction) {
     // determine inverse call to 'moveForward'
     switch (direction) {
@@ -252,13 +266,11 @@ function rotate(direction) {
         // determine direction player will be facing after rotate
         let rotate;
         if (direction == "left") {
-            playerDirection -= 1;
-            if (playerDirection < 1) playerDirection = 4;
+            solveRotate("L")
             rotate = 90;
         }
         else if (direction == "right") {
-            playerDirection += 1;
-            if (playerDirection > 4) playerDirection = 1;
+            solveRotate("R");
             rotate = -90;
         }
         // calculate new at by translating eye, at to origin, apply rotate, translate back
@@ -291,45 +303,66 @@ function mapView() {
     }
 }
 
+// to calculate the direction after rotating
+// 1,2,3,4 compass respective to N,E,S,W
+function solveRotate(direction) {
+    if (direction === "L") {
+        playerDirection -= 1;
+        if (playerDirection < 1) playerDirection = 4;
+    }
+    if (direction === "R") {
+        playerDirection += 1;
+        if (playerDirection > 4) playerDirection = 1;
+    }
+}
 
+// create the necessary moves to the exit of maze from the current position
+// creates the solution matrix and iterates over it to determine the direction to rotate and move forward
+// once the moves are determined, initialize call to animation function and iterate of the moves until the end
 function animateSolveMaze() {
+
     // create the solution matrix
     solution = createMatrix(maze.length, maze[0].length);
     solved = false;
     solutionLength = 1;
     direction = 5;
 
-    // convert current player position openGL coordinates to maze coordinates
+    // reset our moves
+    solveMoves = [];
+
+    // once we are done 'solving' the moves, reset the player direction back to the original direction
+    let tempDirection = playerDirection;
+
+    // convert current player position openGL coordinates -> maze coordinates
     let curr = [((at[0] * 2) + colsDim), ((at[2] * 2) + rowsDim)];
     let currDirection = 5;
 
     // if at the entrance of maze, move into the first cell
     if (curr[0] == -1 && curr[1] == 1) {
-        console.log('entering maze');
-        moveForward(playerDirection);
-        curr = [((at[0] * 2) + colsDim), ((at[2] * 2) + rowsDim)];
+        solveMoves.push("F");
+        curr = [curr[0] + 2, curr[1]];
+        direction = 4;
+        currDirection = 2;
+        playerDirection = 2;
     }
+
     // solve the maze
     solveMaze(maze, curr, end, direction, solution);
+    // print our solution to see shortest path on console screen
     printMaze(maze, true, solution);
 
+    // skip the first step which accounts for the current cell
     solutionLength -= 2;
-    // now with solution matrix, animate the steps
-    //while (curr[0] != end[0] || curr[1] != end[1]) {
-    if (curr[0] != end[0] || curr[1] != end[1]) {
 
-
-
-
+    // now with solution matrix, build the steps we need
+    while (solutionLength > 0) {
         // let's look at current position and see where to head
-
         // remember, only [odd, odd] in the matrix are cells so only check those locations to see where to go next
-
         // look at adjacent [odd, odd] cells to find next move
-
         // column defined curr[0] - col, curr[1] - row, solution[curr[0]][curr[1]] - curr cell
         let foundMove = false;
         let nextMove;
+
         // look north 
         if (currDirection != 3 && !foundMove && curr[1] - 2 > 0) {
             if (solution[curr[0]][curr[1] - 2] == solutionLength) {
@@ -363,61 +396,90 @@ function animateSolveMaze() {
             }
         }
 
-        console.log(`${nextMove} - move in direction ${directions[currDirection - 1]}`);
-
-
         // now we have the direction we need to move and the next move
-
         // lets align our current rotation to the direction we need
         // adjust playerDirection to the currDirection
-        console.log(`player direction - ${playerDirection}, currDirection - ${currDirection}`);
 
-        // how to rotate once animation is done??
-
-        // apply rotations until right direction??
-        let i = 0;
-        while (playerDirection != currDirection && i < 1000) {
-            console.log(isAnimating);
-            if (!isAnimating) {
-                console.log('rotating right');
-                rotate("right");
+        while (playerDirection != currDirection) {
+            if (playerDirection == 4 || playerDirection == 1) {
+                // handle case 4
+                if (playerDirection == 4) {
+                    if (currDirection == 1) {
+                        solveMoves.push("R");
+                        solveRotate("R");
+                    }
+                    else {
+                        solveMoves.push("L");
+                        solveRotate("L");
+                    }
+                }
+                // handle case 1
+                else {
+                    if (currDirection == 4) {
+                        solveMoves.push("L");
+                        solveRotate("L");
+                    }
+                    else {
+                        solveMoves.push("R");
+                        solveRotate("R");
+                    }
+                }
             }
-            i++;
+            else {
+                // if the direction we need to move is to our left
+                if (currDirection < playerDirection) {
+                    solveMoves.push("L");
+                    solveRotate("L");
+                }
+                // else we need to rotate right
+                else {
+                    solveMoves.push("R");
+                    solveRotate("R");
+                }
+            }
+
         }
 
-        if (playerDirection == currDirection) {
-            moveForward(playerDirection);
-            curr = nextMove;
-            solutionLength--;
-        }
 
+        // now that we are facing the current direction towards the next move, move forward
+        solveMoves.push("F");
 
-    } else {
-        if (playerDirection != 2) {
-            rotate("right");
-        } else {
-            moveForward(playerDirection);
-        }
-
+        curr = nextMove;
+        solutionLength--;
     }
 
+    // now we are in the last cell of the maze
+    // orient our direction so we face the exit, then move outside the maze
 
-    //console.log(isAnimating);
+    while (playerDirection != 2) {
+        if (2 < playerDirection) {
+            solveMoves.push("L");
+            solveRotate("L");
+        }
+        else {
+            solveMoves.push("R");
+            solveRotate("R");
+        }
+    }
 
+    // exit the maze
+    solveMoves.push("F");
 
-    // // now lets move
-    // console.log(`moving forward in direction - ${directions[playerDirection - 1]}`);
-    // let completedMove = false;
-    // while (!completedMove) {
-    //     if (!isAnimating) {
-    //         moveForward(playerDirection);
-    //         completedMove = true;
-    //         console.log('move completed');
-    //     }
-    // }
+    playerDirection = tempDirection;
 
-    //}
+    currMove = 0;
+    isSolving = true;
+    if (solveMoves[currMove] == "F") {
+        moveForward(playerDirection)
+    }
+    else if (solveMoves[currMove] == "L") {
+        rotate("left");
+    }
+    else if (solveMoves[currMove] == "R") {
+        rotate("right")
+    }
 }
+
 let counter = 0;
 let alpha = 15;
 let v;
@@ -451,8 +513,25 @@ function animateFrameMove() {
     counter += 1;
     if (counter > alpha) {
         isAnimating = false;
+
+        if (isSolving) {
+            currMove++;
+            if (currMove > solveMoves.length) {
+                isSolving = false;
+            } else {
+                if (solveMoves[currMove] == "F") {
+                    moveForward(playerDirection)
+                }
+                else if (solveMoves[currMove] == "L") {
+                    rotate("left");
+                }
+                else if (solveMoves[currMove] == "R") {
+                    rotate("right")
+                }
+            }
+        }
     }
-    if (isAnimating) {
+    else {
         // create look at moving eye along vector
         let QPrime = vectorAdd(startP, scalarVectorMult(counter / alpha, v));
 
@@ -470,8 +549,24 @@ function animateFrameRotate() {
     counter += 1;
     if (counter > alpha) {
         isAnimating = false;
+        if (isSolving) {
+            currMove++;
+            if (currMove > solveMoves.length) {
+                isSolving = false;
+            } else {
+                if (solveMoves[currMove] == "F") {
+                    moveForward(playerDirection)
+                }
+                else if (solveMoves[currMove] == "L") {
+                    rotate("left");
+                }
+                else if (solveMoves[currMove] == "R") {
+                    rotate("right")
+                }
+            }
+        }
     }
-    if (isAnimating) {
+    else {
         // create look at view for current position along vector
         let QPrime = vectorAdd(startP, scalarVectorMult(counter / alpha, v));
 
@@ -533,18 +628,7 @@ function main() {
         return -1;
     document.onkeydown = keyDownCallback;
 
-    maze = generateMaze({ cols: colsDim, rows: rowsDim });
-    generate3DMaze(maze, positions, colors);
-
-    // init ctm, model_view & projection matrix
-    ctm = createIdentity();
-    model_view = createIdentity();
-    projection = createIdentity();
-
-    init(positions, colors);
-
-    initPlayer();
-    display();
+    createWorld();
 }
 
 // Start the player outside the entrance of the maze
@@ -553,8 +637,11 @@ function initPlayer() {
     // at defines the cell the player is currently in
     // eye is outside cell for frustrum to view entire cell
 
-    eye = [-((colsDim - 1) / 2) - 2, .6, -((rowsDim - 1) / 2), 1];
-    at = [-((colsDim - 1) / 2) - 1, .6, -((rowsDim - 1) / 2), 1];
+    // player starts facing east at entrance of the maze
+    playerDirection = 2;
+
+    eye = [-((colsDim - 1) / 2) - 2, .5, -((rowsDim - 1) / 2), 1];
+    at = [-((colsDim - 1) / 2) - 1, .5, -((rowsDim - 1) / 2), 1];
     up = [0, 1, 0, 0];
 
     // define the initial starting point of the player
@@ -562,7 +649,7 @@ function initPlayer() {
     model_view = model_player_view;
 
     // define the player frustrum 
-    projection_player = frustrum(-.4, .4, -.4, .4, -1, -20);
+    projection_player = frustrum(-.4, .4, -.4, .4, -1, -50);
     projection = projection_player;
 }
 
