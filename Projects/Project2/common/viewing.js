@@ -28,25 +28,8 @@ function look_at(eye, at, up) {
     let translateM = translate(-eye[0], -eye[1], -eye[2]);
 
     // translate first, then rotate
-    result = mmMult(rotateM, translateM);
+    let result = mmMult(rotateM, translateM);
     return result;
-}
-
-function debugLookAt() {
-    let eye = [0, 1, 1, 0];
-    let at = [0, 0, 0, 0];
-    let up = [0, 1, 0, 0];
-    printMatrix(look_at(eye, at, up));
-
-    eye = [0, 0, 0, 0];
-    at = [0, 0, -1, 0];
-    up = [0, 1, 0, 0];
-    printMatrix(look_at(eye, at, up));
-
-    eye = [0, 0, 0, 0];
-    at = [0, 0, -1000, 0];
-    up = [0, 1, 0, 0];
-    printMatrix(look_at(eye, at, up));
 }
 
 // translate and scale our desired view volume to fit into the OpenGL canonical view volume
@@ -81,4 +64,21 @@ function frustrum(left, right, bottom, top, near, far) {
     result[3][2] = (-2 * near * far) / (far - near);
 
     return result;
+}
+
+function debugLookAt() {
+    let eye = [0, 1, 1, 0];
+    let at = [0, 0, 0, 0];
+    let up = [0, 1, 0, 0];
+    printMatrix(look_at(eye, at, up));
+
+    eye = [0, 0, 0, 0];
+    at = [0, 0, -1, 0];
+    up = [0, 1, 0, 0];
+    printMatrix(look_at(eye, at, up));
+
+    eye = [0, 0, 0, 0];
+    at = [0, 0, -1000, 0];
+    up = [0, 1, 0, 0];
+    printMatrix(look_at(eye, at, up));
 }

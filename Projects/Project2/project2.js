@@ -519,8 +519,10 @@ function animateSolveMaze() {
     // exit the maze
     solveMoves.push("F");
 
+    // set our player direction back to the original value
     playerDirection = tempDirection;
 
+    // animate the solve
     currMove = 0;
     isSolving = true;
     if (solveMoves[currMove] == "F") {
@@ -662,11 +664,6 @@ function animateFrameMap() {
         display();
         requestAnimationFrame(animateFrameMap);
     }
-}
-
-// verify we can move this direction
-function verifyMove() {
-
 }
 
 // colors for world in RGB
