@@ -194,6 +194,10 @@ function createWorld() {
 
         init(positions, colors);
         initPlayer();
+        if (lookingAtMap) {
+            model_view = model_map_view;
+            projection = projection_map;
+        }
         display();
     }
 }
@@ -201,7 +205,7 @@ function createWorld() {
 // function to move camera in direction?
 // ** need animation from start - new eye **
 function moveForward(direction) {
-    if (!isAnimating) {
+    if (!isAnimating && !lookingAtMap) {
         // determine which direction we are facing and move that way
         let adjustX = 0;
         let adjustZ = 0;
@@ -262,7 +266,7 @@ function moveBackward(direction) {
 
 // function to rotate in direction
 function rotate(direction) {
-    if (!isAnimating) {
+    if (!isAnimating && !lookingAtMap) {
         // determine direction player will be facing after rotate
         let rotate;
         if (direction == "left") {
@@ -286,19 +290,19 @@ function rotate(direction) {
 // View the map from top of world using look At origin
 function mapView() {
     if (!isAnimating) {
+        // how high the final point should be above the map, scales with the size of maze
+        let scale = colsDim / 2 + 2;
+
         // if already looking at map, go back to player view
         if (lookingAtMap) {
-            model_view = model_player_view;
-            projection = projection_player;
-            display();
+            isAnimating = true;
             lookingAtMap = false;
+            animate([0, scale, 0, 1], [at[0], 0, at[2], 1], "map")
         } else {
-            // how high the final point should be above the map, scales with the size of maze
-            let scale = colsDim / 2 + 2;
             isAnimating = true;
             lookingAtMap = true;
             // animate from player position to top of map
-            animate([eye[0], 0, eye[2], 1], [0, scale, 0, 1], "map");
+            animate([at[0], 0, at[2], 1], [0, scale, 0, 1], "map");
         }
     }
 }
@@ -585,6 +589,12 @@ function animateFrameMap() {
     counter += 1;
     if (counter > alphaMap) {
         isAnimating = false;
+
+        if (!lookingAtMap) {
+            model_view = model_player_view;
+            projection = projection_player;
+            display();
+        }
     }
     if (isAnimating) {
         // create look at view for current position along vector
