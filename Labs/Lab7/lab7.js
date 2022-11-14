@@ -173,17 +173,17 @@ let rightCubeDegree = 0;
 function animate() {
     // twin cube first
     twinCubeDegree += 1;
-    if (twinCubeDegree > 360) twinCubeDegree = 1;
+    if (twinCubeDegree > 360) twinCubeDegree = 0;
     twinCubeCtm = mmMult(translate(twinCubeLocation[0], twinCubeLocation[1], twinCubeLocation[2]), mmMult(rotateY(twinCubeDegree), translate(-twinCubeLocation[0], -twinCubeLocation[1], -twinCubeLocation[2])));
 
     // left cube
     leftCubeDegree += 1;
-    if (leftCubeDegree > 360) leftCubeDegree = 1;
+    if (leftCubeDegree > 360) leftCubeDegree = 0;
     leftCubeCtm = mmMult(translate(leftCubeLocation[0], leftCubeLocation[1], leftCubeLocation[2]), rotateZ(leftCubeDegree));
 
     // right cube
     rightCubeDegree += 1;
-    if (rightCubeDegree > 360) rightCubeDegree = 1;
+    if (rightCubeDegree > 360) rightCubeDegree = 0;
     rightCubeCtm = mmMult(translate(rightCubeLocation[0], rightCubeLocation[1], rightCubeLocation[2]), rotateX(rightCubeDegree));
 
     display();
