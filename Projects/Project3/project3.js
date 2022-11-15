@@ -266,6 +266,8 @@ function main() {
     requestAnimationFrame(animate);
 }
 
+
+
 let alpha = 170;
 let bottomStep = [0, -1.1, 0, 0];
 let topStep = [0, 1, 0, 0];
@@ -389,7 +391,6 @@ function generateNormals(normals) {
 
     return;
 }
-
 
 
 function display() {
