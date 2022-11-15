@@ -8,6 +8,32 @@ function generateSphereVertices(positions, x, y) {
     let from = -80;
     let to = 80;
 
+    // generate top of sphere
+    // generate top & bottom of sphere
+    // get the starting point at top of sphere
+    let top = matrixVectorMult(rotateX(from), point);
+    // get point in center of top circle
+    let topCenter = createVector(4);
+    topCenter[0] = 0;
+    topCenter[1] = top[1];
+    topCenter[2] = 0;
+    topCenter[3] = 1;
+
+    // create circles
+    for (let i = 0; i < 360; i += y) {
+        // left / right y rotations
+        let leftYCtm = rotateY(i);
+        let rightYCtm = rotateY(i + y);
+
+        // top
+        // start from center point
+        positions.push(topCenter);
+        // left point
+        positions.push(matrixVectorMult(leftYCtm, top));
+        // right point
+        positions.push(matrixVectorMult(rightYCtm, top));
+    }
+
     // generate sphere body by rotating around x axis creating individual band
     for (let i = from; i < to; i += x) {
         // top / bottom x rotations
@@ -39,16 +65,6 @@ function generateSphereVertices(positions, x, y) {
         }
     }
 
-    // generate top & bottom of sphere
-    // get the starting point at top of sphere
-    let top = matrixVectorMult(rotateX(from), point);
-    // get point in center of top circle
-    let topCenter = createVector(4);
-    topCenter[0] = 0;
-    topCenter[1] = top[1];
-    topCenter[2] = 0;
-    topCenter[3] = 1;
-
     // get starting point at bottom of sphere
     let bottom = matrixVectorMult(rotateX(to), point);
     // get point in center of bottom circle
@@ -63,14 +79,6 @@ function generateSphereVertices(positions, x, y) {
         // left / right y rotations
         let leftYCtm = rotateY(i);
         let rightYCtm = rotateY(i + y);
-
-        // top
-        // start from center point
-        positions.push(topCenter);
-        // left point
-        positions.push(matrixVectorMult(leftYCtm, top));
-        // right point
-        positions.push(matrixVectorMult(rightYCtm, top));
 
         // bottom
         // start from center point

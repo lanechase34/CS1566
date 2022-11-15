@@ -26,7 +26,7 @@ function initGL(canvas) {
     return 0;
 }
 
-function init(positions, colors) {
+function init(positions, colors, normals) {
     // Load and compile shader programs
     var shaderProgram = initShaders(gl, "vertex-shader", "fragment-shader");
     if (shaderProgram == -1)
@@ -35,11 +35,13 @@ function init(positions, colors) {
     // Allocate memory in a graphics card
     var buffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, 4 * 4 * (positions.length + colors.length), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, 4 * 4 * (positions.length + colors.length + normals.length), gl.STATIC_DRAW);
     // Transfer positions and put it at the beginning of the buffer
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, to1DF32Array(positions));
     // Transfer colors and put it right after positions
     gl.bufferSubData(gl.ARRAY_BUFFER, 4 * 4 * positions.length, to1DF32Array(colors));
+    // Transfer normals and put right after positions and colors
+    gl.bufferSubData(gl.ARRAY_BUFFER, 4 * 4 * (positions.length + colors.length), to1DF32Array(normals));
 
     // Vertex Position - locate and enable "vPosition"
     var vPosition_location = gl.getAttribLocation(shaderProgram, "vPosition");
@@ -60,6 +62,14 @@ function init(positions, colors) {
     gl.enableVertexAttribArray(vColor_location);
     // vColor starts at the end of positions
     gl.vertexAttribPointer(vColor_location, 4, gl.FLOAT, false, 0, 4 * 4 * positions.length);
+
+    // var vNormal_location = gl.getAttribLocation(shaderProgram, "vNormal");
+    // // if (vNormal_location == -1) {
+    // //     alert("Unable to locate vNormal");
+    // //     return -1;
+    // // }
+    // gl.enableVertexAttribArray(vNormal_location);
+    // gl.vertexAttribPointer(vNormal_location, 4, gl.FLOAT, false, 0, 4 * 4 * (positions.length + colors.length));
 
     // Current Transformation Matrix - locate and enable "ctm"
     ctm_location = gl.getUniformLocation(shaderProgram, "ctm");
@@ -100,10 +110,13 @@ let yellow = [255, 255, 0];
 let purple = [191, 64, 191];
 let gold = [255, 215, 0];
 let blue = [0, 0, 255];
+let darkgrey = [90, 90, 90];
 
 // intialize positions/colors arrays
 let positions = [];
 let colors = [];
+// keep track of object normals
+let normals = [];
 
 // model view, projection
 let model_view = [];
@@ -114,14 +127,14 @@ let sphereLength = 3672;
 
 let isAnimating = true;
 
-
 let theta = 0;
 let phi = 0;
 let r = 10;
 
+let lightAdjustment = .2;
+
 function keyDownCallback(event) {
     console.log(event.keyCode);
-
     switch (event.keyCode) {
         // arrow up
         case 38:
@@ -145,6 +158,38 @@ function keyDownCallback(event) {
             phi += 1;
             adjustPlayerView();
             break;
+
+        // w, a, s, d, q, e - adjust light source location
+        // w - -z
+        case 87:
+            pieceLocations[24][2] -= lightAdjustment;
+            adjustLightPosition();
+            break;
+        // s + z
+        case 83:
+            pieceLocations[24][2] += lightAdjustment;
+            adjustLightPosition();
+            break;
+        // a - x
+        case 65:
+            pieceLocations[24][0] -= lightAdjustment;
+            adjustLightPosition();
+            break;
+        // d +x
+        case 68:
+            pieceLocations[24][0] += lightAdjustment;
+            adjustLightPosition();
+            break;
+        // q -y
+        case 81:
+            pieceLocations[24][1] -= lightAdjustment;
+            adjustLightPosition();
+            break;
+        // e +y
+        case 69:
+            pieceLocations[24][1] += lightAdjustment;
+            adjustLightPosition();
+            break;
         // space bar
         case 32:
             if (isAnimating) {
@@ -156,13 +201,29 @@ function keyDownCallback(event) {
     }
 }
 
+function mouseWheelCallback(event) {
+    // zoom in -> decrease r
+    if (event.wheelDeltaY > 0) {
+        r += .5;
+    }
+    // zoom out -> increase r
+    else if (event.wheelDeltaY < 0) {
+        r -= .5;
+    }
+
+    adjustPlayerView();
+}
+
 // by adjusting theta, phi, and r, we modify the player's position (eye)
 // player always looks at origin
 let at = [0, 0, 0, 1];
 let eye;
 let up;
-
-function adjustPlayerView() {
+/**
+ * Adjust our model view based on our current eye, at position will always point at origin
+ * @param initialize - true if we are initializing the world
+ */
+function adjustPlayerView(initialize = false) {
     let eyeX = rotateX(theta);
     let eyeY = rotateY(phi);
     let eyeZ = [0, 0, r, 1];
@@ -171,7 +232,17 @@ function adjustPlayerView() {
     let up = [0, 1, 0, 0];
     model_view = look_at(eye, at, up);
 
-    // adjust lighting effect
+    if (!initialize) display();
+}
+
+
+/**
+ * Adjust light source to new position and redraw colors with updated light location
+ */
+function adjustLightPosition() {
+    // call to re render new colors?
+    pieceCtms[24] = translate(pieceLocations[24][0], pieceLocations[24][1], pieceLocations[24][2]);
+    display();
 }
 
 function main() {
@@ -179,18 +250,147 @@ function main() {
     if (initGL(canvas) == -1)
         return -1;
     document.onkeydown = keyDownCallback;
+    canvas.onwheel = mouseWheelCallback;
 
     generateWorld(positions, colors);
 
-    adjustPlayerView();
+    adjustPlayerView(true);
 
     projection = frustrum(-1, 1, -1, 1, -1, -20);
-    //projection = ortho(-10, 10, -10, 10, 10, -15);
 
-    init(positions, colors);
+    generateNormals(normals);
 
+    init(positions, colors, normals);
+
+    isAnimating = false;
     requestAnimationFrame(animate);
 }
+
+let alpha = 170;
+let bottomStep = [0, -1.1, 0, 0];
+let topStep = [0, 1, 0, 0];
+let zeroStep = [0, -.1, 0, 0];
+let animationIncrement = 2;
+/**
+ * Animate 4 rolling balls about the origin
+ * Animate 16 platforms raising for ball to pass over and lowering when not in use
+ * Each ball / platform combo travels at different speed depending on distance from origin
+ */
+function animate() {
+    // four large platforms
+    for (let i = 0; i < 4; i++) {
+        pieceCtms[i] = translate(pieceLocations[i][0], pieceLocations[i][1], pieceLocations[i][2]);
+    }
+    // sixteen small platforms
+    for (let i = 4; i < 20; i++) {
+        // increment counters accounting for speed adjustment
+        animationCounters[i] += animationIncrement * speedAdjs[i];
+
+        // if > 359, reset to 0
+        if (animationCounters[i] > 359) animationCounters[i] = 0;
+        // need to calculate QPrime (distnance to move platform on y axis)
+        let QPrime;
+
+        // 350 - 10, at the top
+        // 10 - 180, moving to bottom
+        // 180 - 350, moving to top
+
+        let curr = animationCounters[i];
+
+        // move to bottom
+        if (10 <= curr && curr < 180) {
+            QPrime = vectorAdd(zeroStep, scalarVectorMult((curr - 10) / alpha, bottomStep));
+        }
+        // move to top
+        else if (180 <= curr && curr < 350) {
+            QPrime = vectorAdd(bottomStep, scalarVectorMult((curr - 180) / alpha, topStep));
+        }
+        // we are at the top, waiting for ball remain at this pos
+        else {
+            QPrime = zeroStep;
+        }
+
+        pieceCtms[i] = mmMult(translate(0, QPrime[1], 0), translate(pieceLocations[i][0], pieceLocations[i][1], pieceLocations[i][2]));
+    }
+
+    // sphere rotate around origin animation
+    // sphere needs to rotate about itself to show rolling effect
+    for (let i = 20; i < 24; i++) {
+        animationCounters[i] += animationIncrement * speedAdjs[i];
+        if (animationCounters[i] > 359) animationCounters[i] = 0;
+
+        // calculate sphere about vector for rolling effect
+        // about vector = center of mass at starting position - origin
+        let aboutV = vectorSub([pieceLocations[i][0], pieceLocations[i][1], pieceLocations[i][2], 0], [0, 0, 0, 0]);
+        // determine the beta amount of degrees to rotate aboutV based of our theta degree counter and create the new ctm
+        let rollTilt = createRoll(aboutV, animationCounters[i]);
+        pieceCtms[i] = mmMult(rotateY(animationCounters[i]), mmMult(translate(pieceLocations[i][0], pieceLocations[i][1], pieceLocations[i][2]), rollTilt));
+    }
+
+    // light source
+    pieceCtms[24] = translate(pieceLocations[24][0], pieceLocations[24][1], pieceLocations[24][2]);
+
+    display();
+    if (isAnimating) {
+        requestAnimationFrame(animate)
+    }
+}
+
+function createRoll(vector, theta) {
+    let vAbout = vectorNormalize(vector);
+
+    // get d
+    let d = Math.sqrt(vAbout[1] ** 2 + vAbout[2] ** 2);
+
+    // rotate X thetaX
+    let rX = createMatrix(4, 4);
+    rX[0][0] = 1;
+    rX[3][3] = 1;
+    rX[2][2] = vAbout[2] / d;
+    rX[1][1] = vAbout[2] / d;
+    rX[1][2] = vAbout[1] / d;
+    rX[2][1] = -1 * vAbout[1] / d;
+
+    // rotate Y thetaY
+    let rY = createMatrix(4, 4);
+    rY[1][1] = 1;
+    rY[3][3] = 1;
+    rY[0][0] = d;
+    rY[0][2] = -1 * vAbout[0];
+    rY[2][0] = vAbout[0];
+    rY[2][2] = d;
+
+
+    let trackBallCtm = mmMult(matrixTranspose(rX), mmMult(rY, mmMult(rotateZ(theta), mmMult(matrixTranspose(rY), rX))));
+
+    return trackBallCtm;
+}
+
+/**
+ * Generate normals for every object in positions array
+ * First two objects are cubes, second two are spheres
+ * @param normals - array of normals
+ */
+function generateNormals(normals) {
+    // first two objects in positions arrays are cubes
+    // to calculate triangle normal, u cross v = normal
+    // each triangle will share same normal since flat
+    for (let i = 0; i < cubeLength * 2; i += 3) {
+        let currNormal = vectorNormalize(crossProduct(positions[i], positions[i + 2]));
+        normals.push(currNormal);
+        normals.push(currNormal);
+        normals.push(currNormal);
+    }
+
+    // next two objects are spheres
+    for (let i = cubeLength * 2; i < sphereLength * 2; i += 3) {
+
+    }
+
+    return;
+}
+
+
 
 function display() {
     // Clear
@@ -219,60 +419,9 @@ function display() {
         gl.uniformMatrix4fv(ctm_location, false, to1DF32Array(pieceCtms[i]));
         gl.drawArrays(gl.TRIANGLES, 2 * cubeLength, sphereLength);
     }
-}
 
-let alpha = 360;
+    // Draw light source
+    gl.uniformMatrix4fv(ctm_location, false, to1DF32Array(pieceCtms[24]));
+    gl.drawArrays(gl.TRIANGLES, (2 * cubeLength) + (sphereLength), sphereLength);
 
-let bottomStep = [0, -1, 0, 0];
-
-function animate() {
-    // just move piece to proper location for now
-
-    // four large platforms
-    for (let i = 0; i < 4; i++) {
-        pieceCtms[i] = translate(pieceLocations[i][0], pieceLocations[i][1], pieceLocations[i][2]);
-    }
-
-    let offset = 4;
-    // sixteen small platforms
-    for (let i = 4; i < 20; i++) {
-        offset = i % offset > 3 ? offset * 2 : offset
-        animationCounters[i] += 1 * speedAdjs[i % offset];
-
-        if (animationCounters[i] > 360) animationCounters[i] = 0;
-        let QPrime;
-
-        // at bottom of animation
-        if (animationCounters[i] < 20) {
-            QPrime = bottomStep;
-        }
-        // move up
-        else if (animationCounters[i] >= 20 && animationCounters[i] < 180) {
-            QPrime = vectorAdd([0, 0, 0, 0], scalarVectorMult(animationCounters[i] / alpha, bottomStep));
-        }
-        // move down
-        else if (animationCounters[i] >= 180 && animationCounters[i] < 340) {
-            QPrime = vectorAdd([0, 0, 0, 0], scalarVectorMult(animationCounters[i] / alpha, bottomStep));
-        }
-        else {
-            QPrime = [0, 0, 0, 0];
-        }
-
-
-        pieceCtms[i] = mmMult(translate(0, QPrime[1], 0), translate(pieceLocations[i][0], pieceLocations[i][1], pieceLocations[i][2]));
-
-    }
-
-    // sphere rotate around origin animation
-    for (let i = 20; i < 24; i++) {
-        animationCounters[i] += 1.5 * speedAdjs[i % 20];
-        if (animationCounters[i] > 360) animationCounters[i] = 0;
-        pieceCtms[i] = mmMult(rotateY(animationCounters[i]), translate(pieceLocations[i][0], pieceLocations[i][1], pieceLocations[i][2]));
-    }
-
-    display();
-
-    if (isAnimating) {
-        requestAnimationFrame(animate)
-    }
 }
