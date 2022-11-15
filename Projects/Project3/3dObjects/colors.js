@@ -1,4 +1,4 @@
-// generates random colors
+// generates colors
 function generateColors(colors, length, color = null) {
     if (color != null) {
         let currColor = [color[0] / 255, color[1] / 255, color[2] / 255, 1];
@@ -15,6 +15,18 @@ function generateColors(colors, length, color = null) {
         }
     }
 
+    return;
+}
+
+// generate sphere colors
+function generateSphereColors(colors, length) {
+    // each half of sphere is different color
+    for (let i = 0; i < 2; i++) {
+        let currColor = [Math.random(), Math.random(), Math.random(), 1];
+        for (let i = 0; i < sphereLength / 2; i++) {
+            colors.push(currColor);
+        }
+    }
 
     return;
 }
