@@ -27,16 +27,16 @@
 <body>
   <!-- Vertex Shader -->
   <script id="vertex-shader" type="x-shader/x-vertex">
-    attribute vec4 vPosition;
-    attribute vec4 vColor;
+    attribute vec4 vPosition, vColor, vNormal;
     varying vec4 color;
 
-    uniform mat4 ctm;
-    uniform mat4 model_view;
-    uniform mat4 projection;
+    uniform mat4 ctm, model_view, projection;
+    vec4 ambient, diffuse, specular;
+    uniform float shininess, attenuation_constant, attenuation_linear, attenuation_quadratic;
+    uniform vec4 light_position;
+
 
     // toRHR (to right-hand rule)
-    // DO NOT MODIFY THE toRHR VARIABLE
     mat4 toRHR = mat4(vec4(1,0,0,0),
 		      vec4(0,1,0,0),
 		      vec4(0,0,-1,0),
@@ -46,12 +46,33 @@
     {
       vec4 position = projection * model_view * ctm * vPosition;
       color = vColor;
+
+      vec4 normal = ctm * vNormal;
+
+      ambient = color * .3;
+
+      vec4 N = normalize(model_view * ctm * normal);
+      vec4 L_temp = model_view * (light_position - ctm * vPosition);
+      vec4 L = normalize(L_temp);
+      diffuse = max(dot(L, N), 0.0) * color;
+
+      vec4 eye_position = vec4(0.0, 0.0, 0.0, 1.0);
+      vec4 V = normalize(eye_position - (model_view * ctm * vPosition));
+      vec4 H = normalize(L + V);
+      specular = pow(max(dot(N, H), 0.0), shininess) * color;
+
+      float distance = length(L_temp);
+      float attenuation = 1.0/(attenuation_constant + (attenuation_linear * distance) + (attenuation_quadratic * distance * distance));
       
+      vec4 tempC = ambient + (attenuation * (diffuse + specular));
+
+      color = vec4(tempC.x, tempC.y, tempC.z, 1.0);
+
       // DO NOT MODIFY THE NEXT LINE
       gl_Position = toRHR * position;
     }
   </script>
-
+  <!--  -->
   <!-- Fragment Shader -->
   <script id="fragment-shader" type="x-shader/x-fragment">
     precision mediump float;

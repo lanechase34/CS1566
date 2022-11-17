@@ -9,6 +9,20 @@ var ctm_location;
 var model_view_location;
 var projection_location;
 
+var light_position_location;
+var shininess_location;
+var attenuation_constant_location;
+var attenuation_linear_location;
+var attenuation_quadratic_location;
+
+let lightSource = {
+    "shininess": 50,
+    "lightPosition": [],
+    "attenuation_constant": 0,
+    "attenuation_linear": .3,
+    "attenuation_quadratic": 0
+}
+
 function initGL(canvas) {
     gl = canvas.getContext("webgl");
     if (!gl) {
@@ -31,7 +45,7 @@ function init(positions, colors, normals) {
     var shaderProgram = initShaders(gl, "vertex-shader", "fragment-shader");
     if (shaderProgram == -1)
         return -1;
-    gl.useProgram(shaderProgram)
+    gl.useProgram(shaderProgram);
     // Allocate memory in a graphics card
     var buffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
@@ -63,13 +77,15 @@ function init(positions, colors, normals) {
     // vColor starts at the end of positions
     gl.vertexAttribPointer(vColor_location, 4, gl.FLOAT, false, 0, 4 * 4 * positions.length);
 
-    // var vNormal_location = gl.getAttribLocation(shaderProgram, "vNormal");
-    // // if (vNormal_location == -1) {
-    // //     alert("Unable to locate vNormal");
-    // //     return -1;
-    // // }
-    // gl.enableVertexAttribArray(vNormal_location);
-    // gl.vertexAttribPointer(vNormal_location, 4, gl.FLOAT, false, 0, 4 * 4 * (positions.length + colors.length));
+    // Normals of each vertex for lighting
+    var vNormal_location = gl.getAttribLocation(shaderProgram, "vNormal");
+    if (vNormal_location == -1) {
+        alert("Unable to locate vNormal");
+        return -1;
+    }
+    gl.enableVertexAttribArray(vNormal_location);
+    // vNormal starts at end of positions + colors
+    gl.vertexAttribPointer(vNormal_location, 4, gl.FLOAT, false, 0, 4 * 4 * (positions.length + colors.length));
 
     // Current Transformation Matrix - locate and enable "ctm"
     ctm_location = gl.getUniformLocation(shaderProgram, "ctm");
@@ -80,22 +96,51 @@ function init(positions, colors, normals) {
 
     // Model View Matrix - Locate and enable "model_view"
     model_view_location = gl.getUniformLocation(shaderProgram, "model_view");
-    if (model_view_location == null) {
+    if (model_view_location == -1) {
         alert("Unable to locate model view");
         return -1;
     }
 
     // Project Matrix - Locate and enable "projection"
     projection_location = gl.getUniformLocation(shaderProgram, "projection");
-    if (projection_location == null) {
+    if (projection_location == -1) {
         alert("Unable to locate projection");
+        return -1;
+    }
+
+    // Light source location
+    light_position_location = gl.getUniformLocation(shaderProgram, "light_position");
+    if (light_position_location == -1) {
+        alert("Unable to locate light position");
+        return -1;
+    }
+
+    // Shininess Location
+    shininess_location = gl.getUniformLocation(shaderProgram, "shininess");
+    if (shininess_location == -1) {
+        alert("Unable to locate shininess");
+        return -1;
+    }
+
+    // Attenuation 
+    attenuation_constant_location = gl.getUniformLocation(shaderProgram, "attenuation_constant");
+    if (attenuation_constant_location == -1) {
+        alert("Unable to locate attenuation constant");
+        return -1;
+    }
+    attenuation_linear_location = gl.getUniformLocation(shaderProgram, "attenuation_linear");
+    if (attenuation_linear_location == -1) {
+        alert("Unable to locate attenuation linear");
+        return -1;
+    }
+    attenuation_quadratic_location = gl.getUniformLocation(shaderProgram, "attenuation_quadratic");
+    if (attenuation_quadratic_location == -1) {
+        alert("Unable to locate attenuation quadratic");
         return -1;
     }
 
     return 0;
 }
-
-
 
 // colors for world in RGB
 let orange = [255, 140, 0];
@@ -210,7 +255,6 @@ function mouseWheelCallback(event) {
     else if (event.wheelDeltaY < 0) {
         r -= .5;
     }
-
     adjustPlayerView();
 }
 
@@ -242,6 +286,7 @@ function adjustPlayerView(initialize = false) {
 function adjustLightPosition() {
     // call to re render new colors?
     pieceCtms[24] = translate(pieceLocations[24][0], pieceLocations[24][1], pieceLocations[24][2]);
+    lightSource.lightPosition = pieceCtms[24];
     display();
 }
 
@@ -325,7 +370,7 @@ function animate() {
         // about vector = center of mass at starting position - origin
         let aboutV = vectorSub([pieceLocations[i][0], pieceLocations[i][1], pieceLocations[i][2], 0], [0, 0, 0, 0]);
         // determine the beta amount of degrees to rotate aboutV based of our theta degree counter and create the new ctm
-        let rollTilt = createRoll(aboutV, animationCounters[i]);
+        let rollTilt = createRoll(aboutV, -animationCounters[i]);
         pieceCtms[i] = mmMult(rotateY(animationCounters[i]), mmMult(translate(pieceLocations[i][0], pieceLocations[i][1], pieceLocations[i][2]), rollTilt));
     }
 
@@ -378,15 +423,27 @@ function generateNormals(normals) {
     // to calculate triangle normal, u cross v = normal
     // each triangle will share same normal since flat
     for (let i = 0; i < cubeLength * 2; i += 3) {
-        let currNormal = vectorNormalize(crossProduct(positions[i], positions[i + 2]));
+        let u = vectorSub(positions[i], positions[i + 1]);
+        let v = vectorSub(positions[i], positions[i + 2]);
+        let currNormal = vectorNormalize(crossProduct(u, v));
         normals.push(currNormal);
         normals.push(currNormal);
         normals.push(currNormal);
     }
 
-    // next two objects are spheres
-    for (let i = cubeLength * 2; i < sphereLength * 2; i += 3) {
+    // generate normal for spheres
+    for (let i = cubeLength * 2; i < (cubeLength * 2) + (sphereLength); i++) {
+        // calculate sphere normal by transforming point on sphere to vector by subtracting the origin
+        let currNormal = vectorNormalize(vectorSub(positions[i], [0, 0, 0, 1]));
+        normals.push(currNormal);
+    }
 
+    // generate normal for light
+    for (let i = (cubeLength * 2) + sphereLength; i < (cubeLength * 2) + (sphereLength * 2); i++) {
+        // calculate sphere normal by transforming point on sphere to vector by subtracting the origin
+        // inverse the normal for light
+        let currNormal = scalarVectorMult(-1, vectorNormalize(vectorSub(positions[i], [0, 0, 0, 1])));
+        normals.push(currNormal);
     }
 
     return;
@@ -403,6 +460,19 @@ function display() {
     gl.uniformMatrix4fv(model_view_location, false, to1DF32Array(model_view));
     gl.uniformMatrix4fv(projection_location, false, to1DF32Array(projection));
 
+    // Set the light location
+    let light_position = [pieceLocations[24][0], pieceLocations[24][1], pieceLocations[24][2], 1];
+    gl.uniform4fv(light_position_location, new Float32Array(light_position));
+
+    // Set the shininess
+    gl.uniform1f(shininess_location, lightSource.shininess);
+
+    // Set the attenuation
+    gl.uniform1f(attenuation_constant_location, lightSource.attenuation_constant);
+    gl.uniform1f(attenuation_linear_location, lightSource.attenuation_linear);
+    gl.uniform1f(attenuation_quadratic_location, lightSource.attenuation_quadratic);
+
+    // CHANGE NORMALS FOR ROTATING 
     // Draw 4 large platforms
     for (let i = 0; i < 4; i++) {
         gl.uniformMatrix4fv(ctm_location, false, to1DF32Array(pieceCtms[i]));
