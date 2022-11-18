@@ -19,7 +19,7 @@ let lightSource = {
     "shininess": 50,
     "lightPosition": [],
     "attenuation_constant": 0,
-    "attenuation_linear": .3,
+    "attenuation_linear": .2,
     "attenuation_quadratic": 0
 }
 
