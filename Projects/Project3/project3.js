@@ -16,7 +16,7 @@ var attenuation_linear_location;
 var attenuation_quadratic_location;
 
 let lightSource = {
-    "shininess": 50,
+    "shininess": 30,
     "lightPosition": [],
     "attenuation_constant": 0,
     "attenuation_linear": .2,
@@ -203,7 +203,6 @@ function keyDownCallback(event) {
             phi += 1;
             adjustPlayerView();
             break;
-
         // w, a, s, d, q, e - adjust light source location
         // w - -z
         case 87:
@@ -243,16 +242,45 @@ function keyDownCallback(event) {
                 isAnimating = true;
                 requestAnimationFrame(animate);
             }
+            break;
+        // o increase attenuation
+        case 79:
+            lightSource.attenuation_linear += .01;
+            display();
+            break;
+        // l decrease attenuation (intensity)
+        case 76:
+            lightSource.attenuation_linear -= .01;
+            display();
+            break;
+        // i increase shininess
+        case 73:
+            lightSource.shininess += 1;
+            display();
+            break;
+        // k decrease shininess
+        case 75:
+            lightSource.shininess -= 1;
+            display();
+            break;
+        // u increase animation speed
+        case 85:
+            animationIncrement += .1;
+            break;
+        // j decrease animation speed
+        case 74:
+            animationIncrement -= .1;
+            break;
     }
 }
 
 function mouseWheelCallback(event) {
-    // zoom in -> decrease r
-    if (event.wheelDeltaY > 0) {
+    // zoom out -> decrease r
+    if (event.wheelDeltaY < 0) {
         r += .5;
     }
-    // zoom out -> increase r
-    else if (event.wheelDeltaY < 0) {
+    // zoom in -> increase r
+    else if (event.wheelDeltaY > 0) {
         r -= .5;
     }
     adjustPlayerView();
@@ -409,7 +437,6 @@ function createRoll(vector, theta) {
 
 
     let trackBallCtm = mmMult(matrixTranspose(rX), mmMult(rY, mmMult(rotateZ(theta), mmMult(matrixTranspose(rY), rX))));
-
     return trackBallCtm;
 }
 

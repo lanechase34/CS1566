@@ -32,7 +32,6 @@
 
     uniform vec4 light_position;
     uniform mat4 ctm, model_view, projection;
-
     varying float distance;
 
     // toRHR (to right-hand rule)
@@ -56,7 +55,7 @@
       gl_Position = toRHR * position;
     }
   </script>
-  <!--  -->
+
   <!-- Fragment Shader -->
   <script id="fragment-shader" type="x-shader/x-fragment">
     precision mediump float;
@@ -69,12 +68,11 @@
     vec4 ambient, diffuse, specular;
     void main()
     {
-
       vec4 NN = normalize(N);
       vec4 VV = normalize(V);
       vec4 LL = normalize(L);
 
-      ambient = color * .3;
+      ambient = color * .2;
       vec4 H = normalize(LL + VV);
       diffuse = max(dot(LL, NN), 0.0) * color;
       specular = pow(max(dot(NN, H), 0.0), shininess) * color;
@@ -113,6 +111,14 @@
           <li>D - Move Light +X</li>
           <li>Q - Move Light -Y</li>
           <li>E - Move Light +Y</li>
+          <br>
+          <li>O - Increase Attenuation Linear</li>
+          <li>L - Decrease Attenuation Linear</li>
+          <li>I - Increase Shininess</li>
+          <li>K - Decrease Shininess</li>
+          <br>
+          <li>U - Increase Animation Speed</li>
+          <li>J - Decrease Animation Speed</li>
         </ul>
         </p>
       </div>

@@ -79,9 +79,9 @@ function generateWorld(positions, colors) {
     // create small platform
     generatePiece(positions, colors, 'cube', gold, smallPlatformCtm, createIdentity());
     // create sphere
-    generatePiece(positions, colors, 'sphere', '', sphereCtm, createIdentity());
+    generatePiece(positions, colors, 'sphere', null, sphereCtm, createIdentity());
     // create light source
-    generatePiece(positions, colors, 'sphere', 'white', lightCtm, createIdentity());
+    generatePiece(positions, colors, 'sphere', white, lightCtm, createIdentity());
     return;
 }
 
@@ -107,8 +107,8 @@ function generatePiece(positions, colors, object, color, pieceCtm, moveCtm) {
         case 'sphere':
             generateSphereVertices(positions, 10, 10);
             end = positions.length;
-            if (color.length) {
-                generateColors(colors, end - start, white);
+            if (color) {
+                generateColors(colors, end - start, color);
             }
             else {
                 generateSphereColors(colors, end - start);
