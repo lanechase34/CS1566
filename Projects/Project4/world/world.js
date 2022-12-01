@@ -20,36 +20,95 @@ let pieceLocations = [
 
 ];
 
-// Ctms for individual pieces
+// Each piece built in its own frame 
 let pieceFrames = [
     // World
     scaling(15, .2, 15), // world base
 
     // Robot
-    mmMult(translate(0, .5, 0), scaling(1.25, 1, 1.25)), // base
 
-    mmMult(translate(0, 1, 0), scaling(.75, 2, .75)), // arm0
+    // base (0, .5, 0)
+    mmMult(translate(0, .5, 0), scaling(1.25, 1, 1.25)),
 
-    mmMult(translate(0, 0, 1), mmMult(rotateX(90), scaling(1, 2, 1))), // joint1
+    // arm0 (0, 1, 0)
+    mmMult(translate(0, 1, 0), scaling(.75, 2, .75)),
 
-    scaling(.75, 4, .75), // arm1
+    // joint1 (0, 0, 0)
+    mmMult(rotateZ(90), scaling(1, 2, 1)),
 
-    mmMult(rotateZ(90), scaling(1, 2, 1)), // joint2
+    // arm1 (0, 2, 0)
+    mmMult(translate(0, 2, 0), scaling(.75, 4, .75)),
 
-    scaling(.75, 4, .75), //arm2
+    // joint2 (0, 0, 0)
+    mmMult(rotateZ(90), scaling(1, 2, 1)),
 
-    mmMult(rotateZ(90), scaling(1, 2, 1)), // joint3
+    // arm2 (0, 2, 0)
+    mmMult(translate(0, 2, 0), scaling(.75, 4, .75)),
 
-    scaling(.75, 2, .75), // arm3
+    // joint3 (0, 0, 0)
+    mmMult(rotateZ(90), scaling(1, 2, 1)),
 
-    scaling(1, .5, 1), // wrist
+    // arm3 (0, 1, 0)
+    mmMult(translate(0, 1, 0), scaling(.75, 2, .75)),
 
-    scaling(.5, .5, 2), // palm
+    // wrist (0, .25, 0)
+    mmMult(translate(0, .25, 0), scaling(1, .5, 1)),
 
-    scaling(.4, 1, .4), // finger1
+    // palm (0, .25, 0)
+    mmMult(translate(0, .25, 0), scaling(.5, .5, 2)),
 
-    scaling(.4, 1, .4) // finger2
+    // finger1 left(0, .5, 0)
+    mmMult(translate(0, .5, 0), scaling(.4, 1, .4)),
+
+    // finger2 right(0, .5, 0)
+    mmMult(translate(0, .5, 0), scaling(.4, 1, .4))
 ];
+
+// Ctms to put consecutive piece on previous piece's frame
+// EX. arm0 gets put onto base in base frame
+// EX. joint1 gets put onto arm0 in arm0 frame
+
+let pieceCtms = [
+    // world
+    createIdentity(),
+
+    // base
+    createIdentity(),
+
+    // arm0
+    translate(0, 0, 0),
+
+    // joint1
+    translate(0, 2, 0),
+
+    // arm1
+    translate(0, 0, 0),
+
+    // joint2
+    translate(0, 4, 0),
+
+    // arm2
+    translate(0, 0, 0),
+
+    // joint3
+    translate(0, 4, 0),
+
+    // arm3
+    translate(0, 0, 0),
+
+    // wrist
+    translate(0, 2, 0),
+
+    // palm
+    translate(0, .5, 0),
+
+    // finger1
+    translate(0, .5, 0),
+
+    // finger2
+    translate(0, .5, 0)
+];
+
 
 
 
