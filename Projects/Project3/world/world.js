@@ -5,7 +5,6 @@ let pieceLocations = [
     [2.5, -0.1, -2.5], // x, -z (back right)
     [2.5, -0.1, 2.5], // x, z (front right)
 
-
     // right pieces (x)
     [1, -0.1, 0],
     [2, -0.1, 0],
@@ -50,7 +49,6 @@ for (let i = 0; i < pieceLocations.length; i++) {
 }
 
 // add speed adjustment for all platforms and balls
-
 for (let i = 4; i < 24; i += 4) {
     speedAdjs[i] = 1;
     speedAdjs[i + 1] = 1 / 2;
@@ -59,6 +57,7 @@ for (let i = 4; i < 24; i += 4) {
 }
 
 // each platform needs to have a different starting position
+// 360 - top, 180 - bottom
 for (let i = 4; i < 20; i += 4) {
     let currDegree = ((i - 4) / 4) * 90;
     animationCounters[i] = currDegree;
@@ -115,7 +114,6 @@ function generatePiece(positions, colors, object, color, pieceCtm, moveCtm) {
             }
             break;
     }
-
 
     // apply pieceCtm to modify cube to desired shape first
     // apply ctm to move piece to desired location / orientation

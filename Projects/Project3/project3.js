@@ -115,7 +115,7 @@ function init(positions, colors, normals) {
         return -1;
     }
 
-    // Shininess Location
+    // Shininess
     shininess_location = gl.getUniformLocation(shaderProgram, "shininess");
     if (shininess_location == -1) {
         alert("Unable to locate shininess");
@@ -160,6 +160,7 @@ let darkgrey = [90, 90, 90];
 // intialize positions/colors arrays
 let positions = [];
 let colors = [];
+
 // keep track of object normals
 let normals = [];
 
@@ -179,7 +180,6 @@ let r = 10;
 let lightAdjustment = .2;
 
 function keyDownCallback(event) {
-    console.log(event.keyCode);
     switch (event.keyCode) {
         // arrow up
         case 38:
@@ -274,6 +274,7 @@ function keyDownCallback(event) {
     }
 }
 
+// Adjust zoom based on scroll effect
 function mouseWheelCallback(event) {
     // zoom out -> decrease r
     if (event.wheelDeltaY < 0) {
@@ -290,7 +291,7 @@ function mouseWheelCallback(event) {
 // player always looks at origin
 let at = [0, 0, 0, 1];
 let eye;
-let up;
+let up = [0, 1, 0, 0];
 /**
  * Adjust our model view based on our current eye, at position will always point at origin
  * @param initialize - true if we are initializing the world
@@ -301,7 +302,6 @@ function adjustPlayerView(initialize = false) {
     let eyeZ = [0, 0, r, 1];
     eye = matrixVectorMult(mmMult(eyeY, eyeX), eyeZ);
 
-    let up = [0, 1, 0, 0];
     model_view = look_at(eye, at, up);
 
     if (!initialize) display();
@@ -312,12 +312,15 @@ function adjustPlayerView(initialize = false) {
  * Adjust light source to new position and redraw colors with updated light location
  */
 function adjustLightPosition() {
-    // call to re render new colors?
     pieceCtms[24] = translate(pieceLocations[24][0], pieceLocations[24][1], pieceLocations[24][2]);
     lightSource.lightPosition = pieceCtms[24];
     display();
 }
 
+/**
+ * Create the world (1 cube, 2 sphere)
+ * Initialize camera, generate normals, send everything to graphics
+ */
 function main() {
     canvas = document.getElementById("gl-canvas");
     if (initGL(canvas) == -1)
@@ -394,12 +397,14 @@ function animate() {
         animationCounters[i] += animationIncrement * speedAdjs[i];
         if (animationCounters[i] > 359) animationCounters[i] = 0;
 
-        // calculate sphere about vector for rolling effect
-        // about vector = center of mass at starting position - origin
-        let aboutV = vectorSub([pieceLocations[i][0], pieceLocations[i][1], pieceLocations[i][2], 0], [0, 0, 0, 0]);
-        // determine the beta amount of degrees to rotate aboutV based of our theta degree counter and create the new ctm
-        let rollTilt = createRoll(aboutV, -animationCounters[i]);
-        pieceCtms[i] = mmMult(rotateY(animationCounters[i]), mmMult(translate(pieceLocations[i][0], pieceLocations[i][1], pieceLocations[i][2]), rollTilt));
+        // calculate rolling effect
+        // calculate about vector from current position
+        let aboutV = vectorNormalize([pieceLocations[i][0], pieceLocations[i][1], pieceLocations[i][2], 0]);
+        // determine amount of degrees to rotate aboutV based on theta degree counter
+        let beta = -animationCounters[i];
+        let rollCtm = createRoll(aboutV, beta);
+
+        pieceCtms[i] = mmMult(rotateY(animationCounters[i]), mmMult(translate(pieceLocations[i][0], pieceLocations[i][1], pieceLocations[i][2]), rollCtm));
     }
 
     // light source
@@ -411,30 +416,32 @@ function animate() {
     }
 }
 
-function createRoll(vector, theta) {
-    let vAbout = vectorNormalize(vector);
-
+/**
+ * Create rolling effect by rotating object about arbitrary axis
+ * @param vector vector to rotate about
+ * @param theta degree of rotation
+ */
+function createRoll(aboutV, theta) {
     // get d
-    let d = Math.sqrt(vAbout[1] ** 2 + vAbout[2] ** 2);
+    let d = Math.sqrt((aboutV[1] ** 2) + (aboutV[2] ** 2));
 
     // rotate X thetaX
     let rX = createMatrix(4, 4);
     rX[0][0] = 1;
     rX[3][3] = 1;
-    rX[2][2] = vAbout[2] / d;
-    rX[1][1] = vAbout[2] / d;
-    rX[1][2] = vAbout[1] / d;
-    rX[2][1] = -1 * vAbout[1] / d;
+    rX[1][1] = aboutV[2] / d;
+    rX[2][2] = aboutV[2] / d;
+    rX[1][2] = aboutV[1] / d;
+    rX[2][1] = -1 * aboutV[1] / d;
 
     // rotate Y thetaY
     let rY = createMatrix(4, 4);
     rY[1][1] = 1;
     rY[3][3] = 1;
     rY[0][0] = d;
-    rY[0][2] = -1 * vAbout[0];
-    rY[2][0] = vAbout[0];
     rY[2][2] = d;
-
+    rY[0][2] = -1 * aboutV[0];
+    rY[2][0] = aboutV[0];
 
     let trackBallCtm = mmMult(matrixTranspose(rX), mmMult(rY, mmMult(rotateZ(theta), mmMult(matrixTranspose(rY), rX))));
     return trackBallCtm;
@@ -476,7 +483,9 @@ function generateNormals(normals) {
     return;
 }
 
-
+/**
+ * Display to the canvas
+ */
 function display() {
     // Clear
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -499,7 +508,6 @@ function display() {
     gl.uniform1f(attenuation_linear_location, lightSource.attenuation_linear);
     gl.uniform1f(attenuation_quadratic_location, lightSource.attenuation_quadratic);
 
-    // CHANGE NORMALS FOR ROTATING 
     // Draw 4 large platforms
     for (let i = 0; i < 4; i++) {
         gl.uniformMatrix4fv(ctm_location, false, to1DF32Array(pieceCtms[i]));
@@ -521,5 +529,4 @@ function display() {
     // Draw light source
     gl.uniformMatrix4fv(ctm_location, false, to1DF32Array(pieceCtms[24]));
     gl.drawArrays(gl.TRIANGLES, (2 * cubeLength) + (sphereLength), sphereLength);
-
 }
