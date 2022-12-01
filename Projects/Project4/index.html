@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project 4</title>
+
+  <!-- Load user-defined libraries and programs -->
+  <script type="text/javascript" src="common/initShaders.js"></script>
+  <!-- linear algebra, transformation, viewing -->
+  <script src="common/linearAlg.js"></script>
+  <script src="common/testLinearAlg.js"></script>
+  <script src="common/transformation.js"></script>
+  <script src="common/viewing.js"></script>
+  <!-- 3d generated objects -->
+  <script src="3dObjects/colors.js"></script>
+  <script src="3dObjects/cube.js"></script>
+  <script src="3dObjects/sphere.js"></script>
+  <script src="3dObjects/cylinder.js"></script>
+  <!-- world -->
+  <script src="world/world.js"></script>
+  <script src="world/robot.js"></script>
+  <!-- The main program -->
+  <script type="text/javascript" src="project4.js"></script>
+</head>
+
+<body>
+  <!-- Vertex Shader -->
+  <script id="vertex-shader" type="x-shader/x-vertex">
+    attribute vec4 vPosition, vColor, vNormal;
+    varying vec4 color, N, L, V;
+
+    uniform vec4 light_position;
+    uniform mat4 ctm, model_view, projection;
+    varying float distance;
+
+    // toRHR (to right-hand rule)
+    mat4 toRHR = mat4(vec4(1,0,0,0),
+		      vec4(0,1,0,0),
+		      vec4(0,0,-1,0),
+		      vec4(0,0,0,1));
+    
+    void main()
+    {
+      vec4 position = projection * model_view * ctm * vPosition;
+      N = normalize(model_view * ctm * vNormal);
+      vec4 L_temp = model_view * (light_position - ctm * vPosition);
+      L = normalize(L_temp);
+      vec4 eye_position = vec4(0.0, 0.0, 0.0, 1.0);
+      V = normalize(eye_position - (model_view * ctm * vPosition));
+      distance = length(L_temp);
+
+      color = vColor;
+      // DO NOT MODIFY THE NEXT LINE
+      gl_Position = toRHR * position;
+    }
+  </script>
+
+  <!-- Fragment Shader -->
+  <script id="fragment-shader" type="x-shader/x-fragment">
+    precision mediump float;
+    
+    varying vec4 color;
+    varying vec4 N, L, V;
+    varying float distance;
+    uniform float shininess, attenuation_constant, attenuation_linear, attenuation_quadratic;
+
+    vec4 ambient, diffuse, specular;
+    void main()
+    {
+      vec4 NN = normalize(N);
+      vec4 VV = normalize(V);
+      vec4 LL = normalize(L);
+
+      ambient = color * .2;
+      vec4 H = normalize(LL + VV);
+      diffuse = max(dot(LL, NN), 0.0) * color;
+      specular = pow(max(dot(NN, H), 0.0), shininess) * color;
+
+      float attenuation = 1.0/(attenuation_constant + (attenuation_linear * distance) + (attenuation_quadratic * distance * distance));
+      
+      vec4 tempC = ambient + (attenuation * (diffuse + specular));
+	    gl_FragColor = vec4(min(tempC.x, 1.0), min(tempC.y, 1.0), min(tempC.z, 1.0), 1.0);
+    }
+  </script>
+
+  <body onload="main();">
+
+    <div style="display: flex">
+      <div>
+        <canvas id="gl-canvas" width="768" height="768">
+          Sorry;
+        </canvas>
+      </div>
+      <div>
+        <h1>Project 4</h1>
+        <p>
+        <ul>
+          <li>Left Arrow - Rotate Left</li>
+          <li>Right Arrow - Rotate Right</li>
+          <li>Up Arrow - Rotate Up</li>
+          <li>Down Arrow - Rotate Down</li>
+          <li>Scroll Up - Zoom in</li>
+          <li>Scroll Down - Zoom out</li>
+          <br>
+          <li>Q - Rotate Base Left</li>
+          <li>W - Rotate Base Right</li>
+          <br>
+          <li>A - Tilt Arm1 Up</li>
+          <li>Z - Tilt Arm1 Down</li>
+          <br>
+          <li>S - Tilt Arm2 Up</li>
+          <li>X - Tilt Arm2 Down</li>
+          <br>
+          <li>D - Tilt Arm3 Up</li>
+          <li>C - Tilt Arm3 Down</li>
+          <br>
+          <li>E - Rotate Wrist Left</li>
+          <li>R - Rotate Wrist Right</li>
+          <br>
+          <li>F - Close Fingers</li>
+          <li>V - Open Fingers</li>
+        </ul>
+        </p>
+      </div>
+    </div>
+  </body>
+
+</html>

@@ -294,7 +294,7 @@ let eye;
 let up = [0, 1, 0, 0];
 /**
  * Adjust our model view based on our current eye, at position will always point at origin
- * @param initialize - true if we are initializing the world
+ * @param  - true if we are initializing the world
  */
 function adjustPlayerView(initialize = false) {
     let eyeX = rotateX(theta);
