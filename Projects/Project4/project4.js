@@ -136,7 +136,7 @@ function init(positions, colors, normals) {
 
 // information required for light source
 let lightSource = {
-    "shininess": 50,
+    "shininess": 25,
     "position": [],
     "attenuation_constant": 0,
     "attenuation_linear": .075,
@@ -153,32 +153,6 @@ let player = {
     "theta": 0,
     "phi": 0,
     "r": 25
-}
-
-// colors for world in RGB
-let colorCodes = {
-    "orange": [255, 140, 0],
-    "darkorange": [220, 88, 42],
-    "grey": [105, 105, 105],
-    "black": [0, 0, 0],
-    "red": [255, 0, 0],
-    "green": [0, 255, 0],
-    "white": [255, 255, 255],
-    "pink": [255, 192, 203],
-    "yellow": [255, 255, 0],
-    "purple": [191, 64, 191],
-    "gold": [255, 215, 0],
-    "blue": [0, 0, 255],
-    "darkgrey": [90, 90, 90],
-    "lime": [208, 255, 20]
-}
-
-// length of vertices for each unique object
-let objectLength = {
-    "cube": 36,
-    "sphere": 3672,
-    "cylinder": 864,
-    "cone": 0,
 }
 
 //positions, colors, normals arrays
@@ -311,8 +285,10 @@ function mouseWheelCallback(event) {
 function adjustPlayerView(initialize = false) {
     let eyeX = rotateX(player.theta);
     let eyeY = rotateY(player.phi);
-    let eyeZ = [0, 5, player.r, 1];
+    let eyeZ = [0, 0, player.r, 1];
     player.eye = matrixVectorMult(mmMult(eyeY, eyeX), eyeZ);
+
+    printVector(player.eye);
 
     model_view = look_at(player.eye, player.at, player.up);
 
@@ -370,137 +346,53 @@ function display() {
     gl.uniform1f(attenuation_linear_location, lightSource.attenuation_linear);
     gl.uniform1f(attenuation_quadratic_location, lightSource.attenuation_quadratic);
 
-    let move;
-    let ctm;
-
-    // World base
-    move = translate(pieceLocations[0][0], pieceLocations[0][1], pieceLocations[0][2]);
-    gl.uniformMatrix4fv(ctm_location, false, to1DF32Array(mmMult(move, pieceFrames[0])));
-    gl.drawArrays(gl.TRIANGLES, 0, objectLength.cylinder);
+    // Pieces stores object type, object starting vertex, object vertex length
+    // Pieces[0] - robot cylinder, Pieces[1] - robot cube
+    // Rest of pieces make up world
+    // World
+    let offset = 2; // first two pieces for robot
+    for (let i = 0; i < pieceLocations.length; i++) {
+        // apply pieceCtm to scale / orient in proper direction then apply move
+        gl.uniformMatrix4fv(ctm_location, false, to1DF32Array(mmMult(translate(pieceLocations[i][0], pieceLocations[i][1], pieceLocations[i][2]), pieceCtms[i])));
+        gl.drawArrays(gl.TRIANGLES, pieces[i + offset][1], pieces[i + offset][2]);
+    }
 
     // Robot
     // As each piece gets added, they inherit the previous piece's transformations to build a hierarchy
+    // arm2 has arm2 tilt, inherits arm1 tilt, inherits base rotate, etc. 
+    // the structure base->arm0->joint1->arm1->joint2->arm2->joint3->arm3->wrist->palm (branch) --> left finger, right finger
 
+    let ctm = createIdentity();
+    // Base, arm0, joint1, arm1, joint2, arm2, joint3, arm3, wrist (all cylinder)
+    for (let i = 0; i <= 8; i++) {
+        // all pieces rotate by base
+        if (i === 0) ctm = mmMult(ctm, robotCtm.base);
+        // arm1, joint2 (moved by arm1 tilt)
+        if (i === 3) ctm = mmMult(ctm, robotCtm.arm1);
+        // arm2, joint3 (moved by arm2 tilt)
+        if (i === 5) ctm = mmMult(ctm, robotCtm.arm2);
+        // arm3 (moved by arm3 tilt)
+        if (i === 7) ctm = mmMult(ctm, robotCtm.arm3);
+        // wrist (moved by wrist rotate)
+        if (i === 8) ctm = mmMult(ctm, robotCtm.wrist);
 
-    // Base
-    ctm = mmMult(robotCtm.base, mmMult(pieceCtms[1], pieceFrames[1]));
-    gl.uniformMatrix4fv(ctm_location, false, to1DF32Array(ctm));
-    gl.drawArrays(gl.TRIANGLES, objectLength.cylinder, objectLength.cylinder);
+        // add our current objects ctm to put piece on previous piece's frame
+        ctm = mmMult(ctm, robotCtms[i]);
+        // add our current object frame ctm to orient in its frame and scale to correct size
+        gl.uniformMatrix4fv(ctm_location, false, to1DF32Array(mmMult(ctm, robotFrames[i])));
+        gl.drawArrays(gl.TRIANGLES, pieces[0][1], pieces[0][2]);
+    }
 
-    // Arm0
-    ctm = mmMult(robotCtm.base, mmMult(pieceCtms[1], mmMult(pieceCtms[2], pieceFrames[2])));
-    gl.uniformMatrix4fv(ctm_location, false, to1DF32Array(ctm));
-    gl.drawArrays(gl.TRIANGLES, objectLength.cylinder, objectLength.cylinder);
+    let tempCtm = createIdentity();
+    // Palm, Left Finger, Right Finger (all cube)
+    for (let i = 9; i <= 11; i++) {
+        // Left Finger
+        if (i === 10) tempCtm = mmMult(robotCtms[9], robotCtm.leftFinger);
+        // Right Finger
+        if (i === 11) tempCtm = mmMult(robotCtms[9], robotCtm.rightFinger);
 
-    // Joint1
-    ctm = mmMult(robotCtm.base, mmMult(pieceCtms[1], mmMult(pieceCtms[2], mmMult(pieceCtms[3], pieceFrames[3]))));
-    gl.uniformMatrix4fv(ctm_location, false, to1DF32Array(ctm));
-    gl.drawArrays(gl.TRIANGLES, objectLength.cylinder, objectLength.cylinder);
-
-    // Arm1
-    ctm = mmMult(robotCtm.base, mmMult(pieceCtms[1], mmMult(pieceCtms[2], mmMult(pieceCtms[3], mmMult(pieceCtms[4], mmMult(robotCtm.arm1, pieceFrames[4]))))));
-    gl.uniformMatrix4fv(ctm_location, false, to1DF32Array(ctm));
-    gl.drawArrays(gl.TRIANGLES, objectLength.cylinder, objectLength.cylinder);
-
-    // Joint2
-    ctm = mmMult(robotCtm.base, mmMult(pieceCtms[1], mmMult(pieceCtms[2], mmMult(pieceCtms[3], mmMult(pieceCtms[4], mmMult(robotCtm.arm1, mmMult(pieceCtms[5], pieceFrames[5])))))));
-    gl.uniformMatrix4fv(ctm_location, false, to1DF32Array(ctm));
-    gl.drawArrays(gl.TRIANGLES, objectLength.cylinder, objectLength.cylinder);
-
-    // Arm2
-    ctm = mmMult(robotCtm.base, mmMult(pieceCtms[1], mmMult(pieceCtms[2], mmMult(pieceCtms[3], mmMult(pieceCtms[4], mmMult(robotCtm.arm1, mmMult(pieceCtms[5], mmMult(pieceCtms[6], mmMult(robotCtm.arm2, pieceFrames[6])))))))));
-    gl.uniformMatrix4fv(ctm_location, false, to1DF32Array(ctm));
-    gl.drawArrays(gl.TRIANGLES, objectLength.cylinder, objectLength.cylinder);
-
-    // Joint3
-    ctm = mmMult(robotCtm.base, mmMult(pieceCtms[1], mmMult(pieceCtms[2], mmMult(pieceCtms[3], mmMult(pieceCtms[4], mmMult(robotCtm.arm1, mmMult(pieceCtms[5], mmMult(pieceCtms[6], mmMult(robotCtm.arm2, mmMult(pieceCtms[7], pieceFrames[7]))))))))));
-    gl.uniformMatrix4fv(ctm_location, false, to1DF32Array(ctm));
-    gl.drawArrays(gl.TRIANGLES, objectLength.cylinder, objectLength.cylinder);
-
-    // Arm3
-    ctm = mmMult(robotCtm.base, mmMult(pieceCtms[1], mmMult(pieceCtms[2], mmMult(pieceCtms[3], mmMult(pieceCtms[4], mmMult(robotCtm.arm1, mmMult(pieceCtms[5], mmMult(pieceCtms[6], mmMult(robotCtm.arm2, mmMult(pieceCtms[7], mmMult(pieceCtms[8], mmMult(robotCtm.arm3, pieceFrames[8]))))))))))));
-    gl.uniformMatrix4fv(ctm_location, false, to1DF32Array(ctm));
-    gl.drawArrays(gl.TRIANGLES, objectLength.cylinder, objectLength.cylinder);
-
-    // Wrist
-    ctm = mmMult(robotCtm.base, mmMult(pieceCtms[1], mmMult(pieceCtms[2], mmMult(pieceCtms[3], mmMult(pieceCtms[4], mmMult(robotCtm.arm1, mmMult(pieceCtms[5], mmMult(pieceCtms[6], mmMult(robotCtm.arm2, mmMult(pieceCtms[7], mmMult(pieceCtms[8], mmMult(robotCtm.arm3, mmMult(pieceCtms[9], mmMult(robotCtm.wrist, pieceFrames[9]))))))))))))));
-    gl.uniformMatrix4fv(ctm_location, false, to1DF32Array(ctm));
-    gl.drawArrays(gl.TRIANGLES, objectLength.cylinder, objectLength.cylinder);
-
-    // Palm
-    ctm = mmMult(robotCtm.base, mmMult(pieceCtms[1], mmMult(pieceCtms[2], mmMult(pieceCtms[3], mmMult(pieceCtms[4], mmMult(robotCtm.arm1, mmMult(pieceCtms[5], mmMult(pieceCtms[6], mmMult(robotCtm.arm2, mmMult(pieceCtms[7], mmMult(pieceCtms[8], mmMult(robotCtm.arm3, mmMult(pieceCtms[9], mmMult(robotCtm.wrist, mmMult(pieceCtms[10], pieceFrames[10])))))))))))))));
-    gl.uniformMatrix4fv(ctm_location, false, to1DF32Array(ctm));
-    gl.drawArrays(gl.TRIANGLES, objectLength.cylinder * 2, objectLength.cube);
-
-    // Left Finger
-    ctm = mmMult(robotCtm.base, mmMult(pieceCtms[1], mmMult(pieceCtms[2], mmMult(pieceCtms[3], mmMult(pieceCtms[4], mmMult(robotCtm.arm1, mmMult(pieceCtms[5], mmMult(pieceCtms[6], mmMult(robotCtm.arm2, mmMult(pieceCtms[7], mmMult(pieceCtms[8], mmMult(robotCtm.arm3, mmMult(pieceCtms[9], mmMult(robotCtm.wrist, mmMult(pieceCtms[10], mmMult(pieceCtms[11], mmMult(robotCtm.leftFinger, pieceFrames[11])))))))))))))))));
-    gl.uniformMatrix4fv(ctm_location, false, to1DF32Array(ctm));
-    gl.drawArrays(gl.TRIANGLES, (objectLength.cylinder * 2) + objectLength.cube, objectLength.cube);
-
-
-    // RightFinger
-    ctm = mmMult(robotCtm.base, mmMult(pieceCtms[1], mmMult(pieceCtms[2], mmMult(pieceCtms[3], mmMult(pieceCtms[4], mmMult(robotCtm.arm1, mmMult(pieceCtms[5], mmMult(pieceCtms[6], mmMult(robotCtm.arm2, mmMult(pieceCtms[7], mmMult(pieceCtms[8], mmMult(robotCtm.arm3, mmMult(pieceCtms[9], mmMult(robotCtm.wrist, mmMult(pieceCtms[10], mmMult(pieceCtms[12], mmMult(robotCtm.rightFinger, pieceFrames[12])))))))))))))))));
-    gl.uniformMatrix4fv(ctm_location, false, to1DF32Array(ctm));
-    gl.drawArrays(gl.TRIANGLES, (objectLength.cylinder * 2) + objectLength.cube, objectLength.cube);
-
-
-    // for (let i = 1; i <= 3; i++) {
-    //     move = translate(pieceLocations[i][0], pieceLocations[i][1], pieceLocations[i][2]);
-    //     ctm = mmMult(robotCtm.base, mmMult(move, pieceCtms[i]));
-    //     gl.uniformMatrix4fv(ctm_location, false, to1DF32Array(ctm));
-    //     gl.drawArrays(gl.TRIANGLES, objectLength.cylinder, objectLength.cylinder);
-    // }
-
-    // // Arm1, Joint2
-    // for (let i = 4; i <= 5; i++) {
-    //     move = translate(pieceLocations[i][0], pieceLocations[i][1], pieceLocations[i][2]);
-    //     ctm = mmMult(robotCtm.base, mmMult(robotCtm.arm1, mmMult(move, pieceCtms[i])));
-    //     gl.uniformMatrix4fv(ctm_location, false, to1DF32Array(ctm));
-    //     gl.drawArrays(gl.TRIANGLES, objectLength.cylinder, objectLength.cylinder);
-    // }
-
-    // // Arm2, Joint 3
-    // for (let i = 6; i <= 7; i++) {
-    //     move = translate(pieceLocations[i][0], pieceLocations[i][1], pieceLocations[i][2]);
-    //     ctm = mmMult(robotCtm.base, mmMult(robotCtm.arm1, mmMult(robotCtm.arm2, mmMult(move, pieceCtms[i]))));
-    //     gl.uniformMatrix4fv(ctm_location, false, to1DF32Array(ctm));
-    //     gl.drawArrays(gl.TRIANGLES, objectLength.cylinder, objectLength.cylinder);
-    // }
-
-    // // Arm3 
-    // for (let i = 8; i <= 8; i++) {
-    //     move = translate(pieceLocations[i][0], pieceLocations[i][1], pieceLocations[i][2]);
-    //     ctm = mmMult(robotCtm.base, mmMult(robotCtm.arm1, mmMult(robotCtm.arm2, mmMult(robotCtm.arm3, mmMult(move, pieceCtms[i])))));
-    //     gl.uniformMatrix4fv(ctm_location, false, to1DF32Array(ctm));
-    //     gl.drawArrays(gl.TRIANGLES, objectLength.cylinder, objectLength.cylinder);
-    // }
-
-    // // Wrist
-    // for (let i = 9; i <= 9; i++) {
-    //     move = translate(pieceLocations[i][0], pieceLocations[i][1], pieceLocations[i][2]);
-    //     ctm = mmMult(robotCtm.base, mmMult(robotCtm.arm1, mmMult(robotCtm.arm2, mmMult(robotCtm.arm3, mmMult(robotCtm.wrist, mmMult(move, pieceCtms[i]))))));
-    //     gl.uniformMatrix4fv(ctm_location, false, to1DF32Array(ctm));
-    //     gl.drawArrays(gl.TRIANGLES, objectLength.cylinder, objectLength.cylinder);
-    // }
-
-    // // Palm
-    // for (let i = 10; i <= 10; i++) {
-    //     move = translate(pieceLocations[i][0], pieceLocations[i][1], pieceLocations[i][2]);
-    //     ctm = mmMult(robotCtm.base, mmMult(robotCtm.arm1, mmMult(robotCtm.arm2, mmMult(robotCtm.arm3, mmMult(robotCtm.wrist, mmMult(move, pieceCtms[i]))))));
-    //     gl.uniformMatrix4fv(ctm_location, false, to1DF32Array(ctm));
-    //     gl.drawArrays(gl.TRIANGLES, objectLength.cylinder * 2, objectLength.cube);
-    // }
-
-    // // Left Finger
-    // move = translate(pieceLocations[11][0], pieceLocations[11][1], pieceLocations[11][2]);
-    // ctm = mmMult(robotCtm.base, mmMult(robotCtm.arm1, mmMult(robotCtm.arm2, mmMult(robotCtm.arm3, mmMult(robotCtm.wrist, mmMult(robotCtm.leftFinger, mmMult(move, pieceCtms[11])))))));
-    // gl.uniformMatrix4fv(ctm_location, false, to1DF32Array(ctm));
-    // gl.drawArrays(gl.TRIANGLES, (objectLength.cylinder * 2) + objectLength.cube, objectLength.cube);
-
-    // // Right Finger
-    // move = translate(pieceLocations[12][0], pieceLocations[12][1], pieceLocations[12][2]);
-    // ctm = mmMult(robotCtm.base, mmMult(robotCtm.arm1, mmMult(robotCtm.arm2, mmMult(robotCtm.arm3, mmMult(robotCtm.wrist, mmMult(robotCtm.rightFinger, mmMult(move, pieceCtms[12])))))));
-    // gl.uniformMatrix4fv(ctm_location, false, to1DF32Array(ctm));
-    // gl.drawArrays(gl.TRIANGLES, (objectLength.cylinder * 2) + objectLength.cube, objectLength.cube);
-
+        // Since we have varying movement ctms for individual finger, don't assign directly to ctm and just pass to graphics
+        gl.uniformMatrix4fv(ctm_location, false, to1DF32Array(mmMult(ctm, mmMult(tempCtm, mmMult(robotCtms[i], robotFrames[i])))));
+        gl.drawArrays(gl.TRIANGLES, pieces[1][1], pieces[1][2]);
+    }
 }

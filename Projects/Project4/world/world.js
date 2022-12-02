@@ -1,131 +1,86 @@
+// colors for world in RGB
+let colorCodes = {
+    "orange": [255, 140, 0],
+    "darkorange": [220, 88, 42],
+    "grey": [105, 105, 105],
+    "black": [0, 0, 0],
+    "red": [255, 0, 0],
+    "green": [0, 255, 0],
+    "white": [255, 255, 255],
+    "pink": [255, 192, 203],
+    "yellow": [255, 255, 0],
+    "purple": [191, 64, 191],
+    "gold": [255, 215, 0],
+    "blue": [0, 0, 255],
+    "darkgrey": [90, 90, 90],
+    "lime": [208, 255, 20],
+    "turquoise": [64, 224, 208]
+};
+
+// length of vertices for each unique object
+let objectLength = {
+    "cube": 36,
+    "sphere": 3672,
+    "cylinder": 864,
+    "cone": 432,
+    "torus": 31104
+};
+
 // Keep track of center of masss for each object
 let pieceLocations = [
     // World
-    [0, -.5, 0], // world base
-
-    // Robot Arm
-    [0, 0.5, 0], // base
-    [0, 1, 0], // arm0
-    [0, 2, 0], // joint1
-    [0, 4, 0], // arm1
-    [0, 6, 0], // joint2
-    [0, 8, 0], // arm2
-    [0, 10, 0], // joint3
-    [0, 11, 0], // arm3
-    [0, 12.25, 0], // wrist
-    [0, 12.75, 0], // palm
-    [0, 13.5, .2], // finger1
-    [0, 13.5, -.2] // finger2
-
-
+    [0, -.1, 0], // world base
+    [10, .75, 0], // purple sphere
+    [-8, 1, -7], // orange sphere
+    [-6, .5, 5], // pink cube
+    [3, 1, -6], // gold cube
+    [5, 1, 6], // grey cone
+    [-2, .5, 7], // turqouise cone
+    [0, .75, 11], // yellow torus
 ];
 
-// Each piece built in its own frame 
-let pieceFrames = [
-    // World
-    scaling(15, .2, 15), // world base
-
-    // Robot
-
-    // base (0, .5, 0)
-    mmMult(translate(0, .5, 0), scaling(1.25, 1, 1.25)),
-
-    // arm0 (0, 1, 0)
-    mmMult(translate(0, 1, 0), scaling(.75, 2, .75)),
-
-    // joint1 (0, 0, 0)
-    mmMult(rotateZ(90), scaling(1, 2, 1)),
-
-    // arm1 (0, 2, 0)
-    mmMult(translate(0, 2, 0), scaling(.75, 4, .75)),
-
-    // joint2 (0, 0, 0)
-    mmMult(rotateZ(90), scaling(1, 2, 1)),
-
-    // arm2 (0, 2, 0)
-    mmMult(translate(0, 2, 0), scaling(.75, 4, .75)),
-
-    // joint3 (0, 0, 0)
-    mmMult(rotateZ(90), scaling(1, 2, 1)),
-
-    // arm3 (0, 1, 0)
-    mmMult(translate(0, 1, 0), scaling(.75, 2, .75)),
-
-    // wrist (0, .25, 0)
-    mmMult(translate(0, .25, 0), scaling(1, .5, 1)),
-
-    // palm (0, .25, 0)
-    mmMult(translate(0, .25, 0), scaling(.5, .5, 2)),
-
-    // finger1 left(0, .5, 0)
-    mmMult(translate(0, .5, 0), scaling(.4, 1, .4)),
-
-    // finger2 right(0, .5, 0)
-    mmMult(translate(0, .5, 0), scaling(.4, 1, .4))
-];
-
-// Ctms to put consecutive piece on previous piece's frame
-// EX. arm0 gets put onto base in base frame
-// EX. joint1 gets put onto arm0 in arm0 frame
 
 let pieceCtms = [
-    // world
-    createIdentity(),
-
-    // base
-    createIdentity(),
-
-    // arm0
-    translate(0, 0, 0),
-
-    // joint1
-    translate(0, 2, 0),
-
-    // arm1
-    translate(0, 0, 0),
-
-    // joint2
-    translate(0, 4, 0),
-
-    // arm2
-    translate(0, 0, 0),
-
-    // joint3
-    translate(0, 4, 0),
-
-    // arm3
-    translate(0, 0, 0),
-
-    // wrist
-    translate(0, 2, 0),
-
-    // palm
-    translate(0, .5, 0),
-
-    // finger1
-    translate(0, .5, 0),
-
-    // finger2
-    translate(0, .5, 0)
+    scaling(12, .2, 12),
+    scaling(.75, .75, .75),
+    scaling(1, 1, 1),
+    scaling(1, 1, 1),
+    scaling(2, 2, 2),
+    scaling(1.5, 2, 1.5),
+    scaling(1.5, 1, 1.5),
+    mmMult(rotateX(90), scaling(.75, 1.25, .75)),
 ];
 
-
-
-
+// Keep track of what kind of piece and the starting vertex in positions
+let pieces = [];
 
 
 function generateWorld(positions, colors) {
-    // world base
-    generatePiece(positions, colors, 'cylinder', colorCodes.green);
-
     // robot cylinder
     generatePiece(positions, colors, 'cylinder', colorCodes.blue);
 
     // robot cube
     generatePiece(positions, colors, 'cube', colorCodes.red);
 
-    // robot fingers
-    generatePiece(positions, colors, 'cube', colorCodes.orange);
+    // world base
+    generatePiece(positions, colors, 'cylinder', colorCodes.green);
+
+    // sphere
+    generatePiece(positions, colors, 'sphere', colorCodes.purple);
+
+    // sphere
+    generatePiece(positions, colors, 'sphere', colorCodes.darkorange);
+
+    // cube
+    generatePiece(positions, colors, 'cube', colorCodes.pink);
+
+    generatePiece(positions, colors, 'cube', colorCodes.gold);
+
+    generatePiece(positions, colors, 'cone', colorCodes.darkgrey);
+
+    generatePiece(positions, colors, 'cone', colorCodes.turquoise);
+
+    generatePiece(positions, colors, 'torus', colorCodes.orange);
     return;
 }
 
@@ -147,6 +102,7 @@ function generatePiece(positions, colors, object, color) {
             generateCubeVertices(positions);
             end = positions.length;
             generateColors(colors, end - start, color);
+            pieces.push(['cube', start, objectLength.cube]);
             break;
         case 'sphere':
             generateSphereVertices(positions, 10, 10);
@@ -157,11 +113,25 @@ function generatePiece(positions, colors, object, color) {
             else {
                 generateSphereColors(colors, end - start);
             }
+            pieces.push(['sphere', start, objectLength.sphere]);
             break;
         case 'cylinder':
             generateCylinderVertices(positions, 5);
             end = positions.length;
             generateColors(colors, end - start, color);
+            pieces.push(['cylinder', start, objectLength.cylinder]);
+            break;
+        case 'cone':
+            generateConeVertices(positions, 5);
+            end = positions.length;
+            generateColors(colors, end - start, color);
+            pieces.push(['cone', start, objectLength.cone]);
+            break;
+        case 'torus':
+            generateTorusVertices(positions, 5, 5);
+            end = positions.length;
+            generateColors(colors, end - start, color);
+            pieces.push(['torus', start, objectLength.torus]);
             break;
     }
     return;
@@ -170,53 +140,72 @@ function generatePiece(positions, colors, object, color) {
 /**
  * Generate normals for every object in positions array
  */
+
+let curr = 0;
 function generateNormals() {
-    // first two objects are cylinders
-    for (let i = 0; i < objectLength.cylinder * 2; i += 3) {
-        let u = vectorSub(positions[i], positions[i + 1]);
-        let v = vectorSub(positions[i], positions[i + 2]);
-        let currNormal = vectorNormalize(crossProduct(u, v));
-        normals.push(currNormal);
-        normals.push(currNormal);
-        normals.push(currNormal);
+    for (let i = 0; i < pieces.length; i++) {
+        switch (pieces[i][0]) {
+            // cylinder normals
+            case 'cylinder':
+                for (let i = curr; i < curr + objectLength.cylinder; i += 3) {
+                    let u = vectorSub(positions[i], positions[i + 1]);
+                    let v = vectorSub(positions[i], positions[i + 2]);
+                    let currNormal = vectorNormalize(crossProduct(u, v));
+                    normals.push(currNormal);
+                    normals.push(currNormal);
+                    normals.push(currNormal);
+                }
+                curr += objectLength.cylinder;
+                break;
+
+            // cube normals
+            case 'cube':
+                for (let i = curr; i < curr + objectLength.cube; i += 3) {
+                    let u = vectorSub(positions[i], positions[i + 1]);
+                    let v = vectorSub(positions[i], positions[i + 2]);
+                    let currNormal = vectorNormalize(crossProduct(u, v));
+                    normals.push(currNormal);
+                    normals.push(currNormal);
+                    normals.push(currNormal);
+                }
+                curr += objectLength.cube;
+                break;
+
+            // sphere normals
+            case 'sphere':
+                for (let i = curr; i < curr + objectLength.sphere; i++) {
+                    // calculate sphere normal by transforming point on sphere to vector by subtracting the origin
+                    let currNormal = vectorNormalize(vectorSub(positions[i], [0, 0, 0, 1]));
+                    normals.push(currNormal);
+                }
+                curr += objectLength.sphere;
+                break;
+
+            // cone normals 
+            case 'cone':
+                for (let i = curr; i < curr + objectLength.cone; i += 3) {
+                    let u = vectorSub(positions[i], positions[i + 1]);
+                    let v = vectorSub(positions[i], positions[i + 2]);
+                    let currNormal = vectorNormalize(crossProduct(u, v));
+                    normals.push(currNormal);
+                    normals.push(currNormal);
+                    normals.push(currNormal);
+                }
+                curr += objectLength.cone;
+                break;
+
+            // torus normals
+            case 'torus':
+                for (let i = curr; i < curr + objectLength.torus; i += 3) {
+                    let u = vectorSub(positions[i], positions[i + 1]);
+                    let v = vectorSub(positions[i], positions[i + 2]);
+                    let currNormal = vectorNormalize(crossProduct(u, v));
+                    normals.push(currNormal);
+                    normals.push(currNormal);
+                    normals.push(currNormal);
+                }
+                curr += objectLength.torus;
+                break;
+        }
     }
-
-    // third object is cube
-    for (let i = objectLength.cylinder * 2; i < (objectLength.cylinder * 2) + (objectLength.cube * 2); i += 3) {
-        let u = vectorSub(positions[i], positions[i + 1]);
-        let v = vectorSub(positions[i], positions[i + 2]);
-        let currNormal = vectorNormalize(crossProduct(u, v));
-        normals.push(currNormal);
-        normals.push(currNormal);
-        normals.push(currNormal);
-    }
-
-    // // first two objects in positions arrays are cubes
-    // // to calculate triangle normal, u cross v = normal
-    // // each triangle will share same normal since flat
-    // for (let i = 0; i < cubeLength * 2; i += 3) {
-    //     let u = vectorSub(positions[i], positions[i + 1]);
-    //     let v = vectorSub(positions[i], positions[i + 2]);
-    //     let currNormal = vectorNormalize(crossProduct(u, v));
-    //     normals.push(currNormal);
-    //     normals.push(currNormal);
-    //     normals.push(currNormal);
-    // }
-
-    // // generate normal for spheres
-    // for (let i = cubeLength * 2; i < (cubeLength * 2) + (sphereLength); i++) {
-    //     // calculate sphere normal by transforming point on sphere to vector by subtracting the origin
-    //     let currNormal = vectorNormalize(vectorSub(positions[i], [0, 0, 0, 1]));
-    //     normals.push(currNormal);
-    // }
-
-    // // generate normal for light
-    // for (let i = (cubeLength * 2) + sphereLength; i < (cubeLength * 2) + (sphereLength * 2); i++) {
-    //     // calculate sphere normal by transforming point on sphere to vector by subtracting the origin
-    //     // inverse the normal for light
-    //     let currNormal = scalarVectorMult(-1, vectorNormalize(vectorSub(positions[i], [0, 0, 0, 1])));
-    //     normals.push(currNormal);
-    // }
-
-    return;
 }
