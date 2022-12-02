@@ -401,7 +401,7 @@ function animate() {
         // calculate about vector from current position
         let aboutV = vectorNormalize([pieceLocations[i][0], pieceLocations[i][1], pieceLocations[i][2], 0]);
         // determine amount of degrees to rotate aboutV based on theta degree counter
-        let beta = -animationCounters[i];
+        let beta = -animationCounters[i] * 3;
         let rollCtm = createRoll(aboutV, beta);
 
         pieceCtms[i] = mmMult(rotateY(animationCounters[i]), mmMult(translate(pieceLocations[i][0], pieceLocations[i][1], pieceLocations[i][2]), rollCtm));
