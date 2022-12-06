@@ -23,10 +23,15 @@ let robotDegrees = {
 // information for robot flashlight located at tip of arm
 let robotFlashlight = {
     "shininess": 100,
-    "position": [],
+    "position": [0, 12.75, 0, 1],
     "attenuation_constant": 0,
-    "attenuation_linear": .2,
-    "attenuation_quadratic": 0
+    "attenuation_linear": .15,
+    "attenuation_quadratic": 0,
+    // To simulate spotlight projection, a cone is formed at the flashlight location, 
+    // any points located inside the cone will have the light
+    "coneProjection": [0, 18.75, 0, 1],
+    "coneHeight": 6,
+    "coneRadius": 1
 }
 
 // Each piece built in its own frame
