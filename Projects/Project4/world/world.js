@@ -32,7 +32,7 @@ let pieceLocations = [
     [0, -.1, 0], // world base
     [10, .75, 0], // purple sphere
     [-8, 1.5, -7], // orange sphere
-    [-6, .5, 5], // pink cube
+    [-6, .75, 5], // pink cube
     [3, 1, -6], // gold cube
     [5, 1, 6], // grey cone
     [-2, .5, 7], // turqouise cone
@@ -44,7 +44,7 @@ let pieceCtms = [
     scaling(12, .2, 12),
     scaling(.75, .75, .75),
     scaling(1.5, 1.5, 1.5),
-    scaling(1, 1, 1),
+    scaling(1.5, 1.5, 1.5),
     scaling(2, 2, 2),
     scaling(1.5, 2, 1.5),
     scaling(1.5, 1, 1.5),
