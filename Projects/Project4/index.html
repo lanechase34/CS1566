@@ -41,10 +41,9 @@
     varying float light_distance;
 
     // Robot Flashlight
-    varying vec4 FN, FL, FV;
-    uniform vec4 flashlight_position;
-    varying float flashlight_distance; 
-    varying float theta;
+    varying vec4 FN, FL, FV, FD;
+    uniform vec4 flashlight_position, flashlight_direction;
+    varying float flashlight_distance, theta;
 
     // toRHR (to right-hand rule)
     mat4 toRHR = mat4(vec4(1,0,0,0),
@@ -71,16 +70,11 @@
       FV = normalize(eye_position - (model_view * ctm * vPosition));
       flashlight_distance = length(FL_temp);
 
-      // Determine if current position inside spotlight 'cone'
-      float coneHeight = 6.0;
-      float coneRadius = 1.0;
+      // Using flashlight direction vector and surface normal, determine theta, magnitude of spotlight effect
+      FD = normalize(flashlight_direction - flashlight_position);
 
-      vec4 coneEnd = projection * model_view * ctm * vec4(0.0, 18.75, 0.0, 1.0);
-      if(all(greaterThan(coneEnd, position))) {
-        theta = 90.0;
-      } else {
-        theta = 60.0;
-      }
+      theta = acos((dot(FD, FN)));
+
       color = vColor;
       gl_Position = toRHR * position; // DO NOT MODIFY
     }
@@ -101,13 +95,13 @@
     varying vec4 FN, FL, FV;
     varying float flashlight_distance;
     varying float theta;
-    uniform float flashlight_shininess, flashlight_attenuation_constant, flashlight_attenuation_linear, flashlight_attenuation_quadratic;
+    uniform float flashlight_alpha, flashlight_shininess, flashlight_attenuation_constant, flashlight_attenuation_linear, flashlight_attenuation_quadratic;
     vec4 Fambient, Fdiffuse, Fspecular;
     
     void main()
     {
       // Player Light
-      ambient = color * .2;
+      ambient = color * .1;
       vec4 H = normalize(L + V);
       diffuse = max(dot(L, N), 0.0) * color;
       specular = pow(max(dot(N, H), 0.0), shininess) * color;
@@ -121,10 +115,10 @@
       float Fattenuation = 1.0/(flashlight_attenuation_constant + (flashlight_attenuation_linear * flashlight_distance) + (flashlight_attenuation_quadratic * flashlight_distance * flashlight_distance));
 
 
-
       // Add together and create total new color
       vec4 playerC = (ambient + (attenuation * (diffuse + specular)));
-      vec4 flashlightC = ((Fattenuation * (Fdiffuse + Fspecular))) * cos(radians(theta));
+      // Flashlight intensity determined by cos^alpha(theta)
+      vec4 flashlightC = ((Fattenuation * (Fdiffuse + Fspecular))) * pow(cos(radians(theta)), flashlight_alpha);
 
       vec4 tempC = playerC + flashlightC;
 	    gl_FragColor = vec4(min(tempC.x, 1.0), min(tempC.y, 1.0), min(tempC.z, 1.0), 1.0);

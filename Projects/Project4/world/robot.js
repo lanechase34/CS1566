@@ -29,9 +29,10 @@ let robotFlashlight = {
     "attenuation_quadratic": 0,
     // To simulate spotlight projection, a cone is formed at the flashlight location, 
     // any points located inside the cone will have the light
-    "coneProjection": [0, 18.75, 0, 1],
-    "coneHeight": 6,
-    "coneRadius": 1
+    "direction": [0, 13.75, 0, 1],
+    "coneHeight": .1,
+    // determines the dropoff of intensity outside the direct flashlight
+    "alpha": 1
 }
 
 // Each piece built in its own frame

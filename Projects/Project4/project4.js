@@ -16,6 +16,8 @@ var attenuation_linear_location;
 var attenuation_quadratic_location;
 
 var flashlight_position_location;
+var flashlight_direction_location;
+var flashlight_alpha_location;
 var flashlight_shininess_location;
 var flashlight_attenuation_constant_location;
 var flashlight_attenuation_linear_location;
@@ -137,13 +139,24 @@ function init(positions, colors, normals) {
 
     // For robot flashlight light source
     flashlight_position_location = gl.getUniformLocation(shaderProgram, "flashlight_position");
-    if (light_position_location == -1) {
+    if (flashlight_position_location == -1) {
         alert("Unable to locate light position");
+        return -1;
+    }
+    flashlight_direction_location = gl.getUniformLocation(shaderProgram, "flashlight_position");
+    if (flashlight_position_location == -1) {
+        alert("Unable to locate light position");
+        return -1;
+    }
+    // Alpha
+    flashlight_alpha_location = gl.getUniformLocation(shaderProgram, "flashlight_alpha");
+    if (flashlight_alpha_location == -1) {
+        alert("Unable to locate alpha");
         return -1;
     }
     // Shininess
     flashlight_shininess_location = gl.getUniformLocation(shaderProgram, "flashlight_shininess");
-    if (shininess_location == -1) {
+    if (flashlight_shininess_location == -1) {
         alert("Unable to locate shininess");
         return -1;
     }
@@ -154,12 +167,12 @@ function init(positions, colors, normals) {
         return -1;
     }
     flashlight_attenuation_linear_location = gl.getUniformLocation(shaderProgram, "flashlight_attenuation_linear");
-    if (attenuation_linear_location == -1) {
+    if (flashlight_attenuation_linear_location == -1) {
         alert("Unable to locate attenuation linear");
         return -1;
     }
     flashlight_attenuation_quadratic_location = gl.getUniformLocation(shaderProgram, "flashlight_attenuation_quadratic");
-    if (attenuation_quadratic_location == -1) {
+    if (flashlight_attenuation_quadratic_location == -1) {
         alert("Unable to locate attenuation quadratic");
         return -1;
     }
@@ -317,7 +330,8 @@ function adjustPlayerView(initialize = false) {
     let eyeX = rotateX(player.theta);
     let eyeY = rotateY(player.phi);
     let eyeZ = [0, 0, player.r, 1];
-    player.eye = matrixVectorMult(mmMult(eyeY, eyeX), eyeZ);
+
+    player.eye = matrixVectorMult(eyeX, matrixVectorMult(eyeY, eyeZ));
     model_view = look_at(player.eye, player.at, player.up);
 
     // light position is always where player eye is
@@ -375,6 +389,8 @@ function display() {
 
     // For robot flashlight
     gl.uniform4fv(flashlight_position_location, new Float32Array(robotFlashlight.position));
+    gl.uniform4fv(flashlight_direction_location, new Float32Array(robotFlashlight.direction));
+    gl.uniform1f(flashlight_alpha_location, robotFlashlight.alpha);
     gl.uniform1f(flashlight_shininess_location, robotFlashlight.shininess);
     gl.uniform1f(flashlight_attenuation_constant_location, robotFlashlight.attenuation_constant);
     gl.uniform1f(flashlight_attenuation_linear_location, robotFlashlight.attenuation_linear);
@@ -433,5 +449,5 @@ function display() {
     // Update robot flashlight position
     robotFlashlight.position = matrixVectorMult(mmMult(ctm, mmMult(robotCtms[9], robotFrames[9])), [0, 0, 0, 1]);
     // Update robot flashlight cone projection
-    robotFlashlight.coneProjection = matrixVectorMult(mmMult(ctm, mmMult(translate(0, robotFlashlight.coneHeight, 0), mmMult(robotCtms[9], robotFrames[9]))), [0, 0, 0, 1]);
+    robotFlashlight.direction = matrixVectorMult(mmMult(ctm, mmMult(translate(0, robotFlashlight.coneHeight, 0), mmMult(robotCtms[9], robotFrames[9]))), [0, 0, 0, 1]);
 }
