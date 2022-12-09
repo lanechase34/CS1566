@@ -331,7 +331,7 @@ function adjustPlayerView(initialize = false) {
     let eyeY = rotateY(player.phi);
     let eyeZ = [0, 0, player.r, 1];
 
-    player.eye = matrixVectorMult(eyeX, matrixVectorMult(eyeY, eyeZ));
+    player.eye = matrixVectorMult(mmMult(eyeY, eyeX), eyeZ);
     model_view = look_at(player.eye, player.at, player.up);
 
     // light position is always where player eye is
