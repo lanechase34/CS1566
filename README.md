@@ -3,6 +3,6 @@ WebGL and Javascript
 
 ## Projects
 1. 3D objects with trackball transformation
-2. 3D Randomly generated maze with auto solver
+2. 3D randomly generated maze with auto solver
 3. Lighting based on Phong model with animation
 4. Controllable robot arm with hierarchical transformation
